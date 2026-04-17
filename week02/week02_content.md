@@ -18,9 +18,15 @@
 
 ---
 
-# Lecture Material: Bag of Words Classifier
+## Lecture Material: Bag of Words Classifier
 
-* **Summary:**This lecture introduces a classical text classification workflow based on bag-of-words representations, linear classifiers, and standard evaluation methods. It also adds generalized rules about how document-term features are built, how data should be split to avoid leakage, and how to interpret common classification metrics.
+* **Summary:** This lecture introduces a classical text classification workflow built around **bag-of-words features**, **linear classifiers**, and **standard evaluation procedures**. The main idea is that documents must be converted into fixed-length numeric vectors before a classifier can learn from them, and the representation choice strongly affects performance. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+
+* **Why this lecture matters:** In the NLP pipeline, **representation** is the bridge between raw text and machine learning. A bag-of-words classifier does not read language the way humans do; it learns from vocabulary-based numeric features such as counts, binary indicators, or tf-idf weights. [bbengfort.github](https://bbengfort.github.io/2016/05/text-classification-nltk-sckit-learn/)
+
+* **Likely testing style:** Based on Week 1, the instructor may prefer **clean definitions, implementation distinctions, default behavior, and concrete consequences of design choices** rather than only broad summaries. That means this section should foreground terms like `CountVectorizer`, `TfidfVectorizer`, vocabulary, sparse matrix, train/dev/test split, leakage, and the meanings of accuracy, precision, recall, and F1. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+***
 
 ## Table of Contents
 - [Course and Lecture Context](#course-and-lecture-context)
@@ -32,278 +38,350 @@
 - [N-grams and TF-IDF](#n-grams-and-tf-idf)
 - [Data Validation and Splitting](#data-validation-and-splitting)
 - [Evaluation Metrics](#evaluation-metrics)
+- [Likely Test Targets](#likely-test-targets)
 - [Generalized Rules](#generalized-rules)
 - [Glossary](#glossary)
+
+***
 
 ## Course and Lecture Context
 
 ### Lecture Title
 - **Bag of Words Classifier**
 
-### Summary
-- Outlines a general framework for text mining and natural language processing tasks.
-- Focuses on representation learning as a crucial step.
-- Introduces classical bag-of-words representation for document classification.
-- Connects representation choices to model evaluation and validation strategy. 
+### Core Focus
+- This lecture explains how to turn documents into numeric feature vectors and use those vectors for classification. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- The key theme is that **representation is not a side detail**; it determines what information the classifier can and cannot use. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Goals
-- Describe the general framework for text mining and natural language processing tasks.
-- Apply bag-of-words representations to conduct text classification.
-- Describe and apply the implementation details of bag-of-words representation.
-- Explain how vocabulary construction, feature weighting, and evaluation choices affect classifier behavior. 
+### High-Level Goal
+- Learn the standard pipeline for document classification:
+  - Prepare text.
+  - Convert text into features.
+  - Train a classifier.
+  - Evaluate predictions with appropriate metrics. [bbengfort.github](https://bbengfort.github.io/2016/05/text-classification-nltk-sckit-learn/)
+
+### Week 2 Priority
+- Compared with Week 1, this lecture shifts from **preprocessing mechanics** to **feature construction and supervised classification**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- The most testable ideas are likely to be the exact meaning of bag-of-words, vocabulary learning, tf-idf, data splitting, and evaluation metrics. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Bag of Words Classifier
 
-### Main Topic
-- The lecture introduces the **Bag-of-Words Text Classifier**.
+### Definition
+- A **bag-of-words classifier** represents each document as a vector indexed by vocabulary terms, then trains a model on those vectors to predict labels such as positive or negative sentiment. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
 
-### Purpose
-- The focus is on defining text classification and understanding how to evaluate a classifier.
-- It covers foundational **Bag-of-Words Representations**.
-- It introduces building a linear classifier upon these bag-of-words representations.
-- It emphasizes that representation design is a central part of the modeling pipeline, not just a preprocessing detail. 
+### Core Mechanism
+- Step 1: Build a vocabulary from training documents. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Step 2: Convert each document into a feature vector over that vocabulary. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Step 3: Train a classifier on the resulting document-term matrix. [bbengfort.github](https://bbengfort.github.io/2016/05/text-classification-nltk-sckit-learn/)
 
-### Core Idea
-- A bag-of-words classifier converts each document into a numeric feature vector over a vocabulary and then uses those features as input to a classifier. 
-- The representation typically keeps track of which terms occur and how often they occur, while discarding most grammar and long-range word order. 
+### Main Intuition
+- The classifier does not directly understand meaning, syntax, or discourse. Instead, it learns statistical relationships between feature patterns and labels. [bbengfort.github](https://bbengfort.github.io/2016/05/text-classification-nltk-sckit-learn/)
+- If certain words or phrases appear more often in positive documents than in negative ones, a linear model can use those patterns for prediction. [bbengfort.github](https://bbengfort.github.io/2016/05/text-classification-nltk-sckit-learn/)
+
+### Important Limitation
+- Bag-of-words usually ignores most word order, so it can miss deeper compositional meaning even when it works well in practice. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+
+***
 
 ## A Typical Text Mining Pipeline
 
 ### Pipeline Overview
-- The lecture recaps the following sequence:
-
-$$
+\[
 \text{Preprocessing} \rightarrow \text{Representation} \rightarrow \text{Model Training}
-$$
+\]
 
-### High-Level Meaning
-- The pipeline is organized into three major stages:
-  - **Preprocessing**: Try to make texts "better formatted".
-  - **Representation**: Make the text data machine-actionable.
-  - **Model Training**: Specifically for the end-task.
+- **Preprocessing:** Clean or normalize text so it is easier to handle computationally. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- **Representation:** Convert text into machine-usable numeric features such as counts or tf-idf weights. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- **Model Training:** Fit a predictive model for the target task. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Interpretation
-- In text classification, preprocessing prepares raw text, representation converts it to features such as counts or tf-idf weights, and model training fits a predictive function on those features. 
-- The quality of the representation strongly affects downstream performance because the classifier only sees the numeric features, not the raw text itself. 
+### Why representation matters
+- The classifier only sees the feature matrix, not the original raw text. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Because of that, the representation determines what information is preserved, discarded, emphasized, or ignored. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+
+### Main takeaway
+- Better modeling does not always come from changing the classifier; it often comes from improving the representation. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Sentiment Analysis as an Example
 
-### Main Topic
-- Using **Sentiment Analysis** to demonstrate text classification.
+### Task definition
+- **Sentiment analysis** is a document classification task in which the model predicts whether text expresses positive or negative sentiment. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- A standard example is labeling movie reviews as positive (1) or negative (0). [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
 
-### Purpose
-- To estimate a document's sentiment from its content, such as determining whether a review is positive or negative.
-- Utilizes datasets like the IMDB movie reviews dataset to classify textual data into positive (1) or negative (0) sentiments.
+### Why bag-of-words works here
+- Sentiment is often correlated with repeated lexical patterns such as positive adjectives, negative adjectives, and short phrases like “not good.” [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Because those signals often appear at the word or short-phrase level, bag-of-words and n-gram features can be effective baselines. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
 
-### Why This Example Fits
-- Sentiment analysis is a standard document classification task in which the input is free text and the output is a discrete label. 
-- It is a good match for bag-of-words methods because sentiment is often signaled by word usage patterns that can be captured by document-term features. 
+### Important caution
+- Bag-of-words may still miss nuanced context, sarcasm, or long-range dependencies. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+
+***
 
 ## Bag-of-Words Representation
 
 ### Definition
-- **Bag-of-words** represents a document as a fixed-length vector over a learned vocabulary. 
-- Each dimension corresponds to a term, and the value usually reflects a count, a binary indicator, or a weighted value such as tf-idf. 
+- **Bag-of-words** represents a document as a fixed-length vector whose dimensions correspond to vocabulary terms. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The feature value for each term may be a count, a binary indicator, or a weighted value such as tf-idf. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### What It Keeps
-- Whether a term appears in the document.
-- How often a term appears, if counts are used.
-- Limited local order information when n-grams are included. 
+### What it keeps
+- Whether a term appears. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- How often a term appears, if counts are used. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Short local order patterns, if n-grams are included. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
 
-### What It Discards
-- Most word order.
-- Most syntactic structure.
-- Most long-range contextual meaning. 
+### What it discards
+- Most word order. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Most grammar and syntax. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Most long-distance contextual relationships. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Consequence
-- Two documents with similar term counts can receive similar vectors even if their phrasing or exact meaning differs. 
-- This makes bag-of-words simple and effective for many tasks, but it also limits its ability to model nuanced semantics. 
+### Practical consequence
+- Two documents with similar vocabulary distributions can look similar to the classifier even if their wording or deeper meaning differs. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- This simplicity makes bag-of-words efficient and useful, but it also limits semantic precision. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Vectorization Rules
 
 ### CountVectorizer
-- `CountVectorizer` converts a collection of text documents into a matrix of token counts. 
-- The output is typically a **sparse matrix**, because most documents contain only a small fraction of the full vocabulary. 
+- `CountVectorizer` converts a collection of documents into a **document-term matrix** of token counts. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The result is typically a **sparse matrix** because each document uses only a small subset of the full vocabulary. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
 
-### Default Behavior
-- By default, `CountVectorizer` lowercases text before tokenization. 
-- By default, it uses a token pattern that selects tokens of 2 or more alphanumeric characters. 
-- Punctuation generally acts as a separator rather than a feature token under the default tokenization pattern. 
+### Default behavior
+- `CountVectorizer` lowercases text by default. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Its default tokenization pattern usually keeps tokens with two or more alphanumeric characters. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Under the default rules, punctuation is usually treated as a separator rather than a feature token. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Vocabulary Learning
-- The vocabulary is learned during `fit` from the training corpus. 
-- When transforming new documents, terms that were not seen during training are ignored. 
-- Because of this, train/test or train/validation splits must be created before fitting the vectorizer to avoid leakage. 
+### Vocabulary learning
+- The vocabulary is learned during `fit` on the training corpus. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- When new documents are transformed, unseen terms do not create new features; they are ignored. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- This means the feature space is fixed after fitting. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Frequency Controls
-- `min_df` removes terms that are too rare across the corpus. 
-- `max_df` removes terms that appear in too many documents and can function like corpus-specific stop-word filtering. 
-- `binary=True` changes features from counts to presence/absence indicators. 
+### Frequency controls
+- `min_df` removes terms that appear in too few documents. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- `max_df` removes terms that appear in too many documents and can behave like corpus-specific stopword filtering. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- `binary=True` converts counts into simple presence/absence features. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Testable distinction
+- `fit` learns the vocabulary or weighting statistics. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- `transform` uses what was already learned and does **not** relearn from new data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- `fit_transform` does both on the same data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## N-grams and TF-IDF
 
 ### N-grams
-- A **unigram** is a single token.
-- A **bigram** is a sequence of two adjacent tokens.
-- Higher-order n-grams capture more local word order than plain unigram bag-of-words. 
+- A **unigram** is one token. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- A **bigram** is a sequence of two adjacent tokens. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Higher-order n-grams preserve more local word order than plain unigram features. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
 
-### Why N-grams Matter
-- Unigrams ignore order almost completely.
-- Bigrams and higher n-grams can preserve short local patterns such as `not good`, which may be important for classification. 
+### Why n-grams matter
+- Unigrams usually lose order information almost completely. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Bigrams can preserve short patterns like `not good`, which may change meaning in classification tasks. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
 
 ### TF-IDF
-- TF-IDF stands for **term frequency-inverse document frequency**. 
-- It reweights count-based features so that terms frequent in a document but not too common across the full corpus receive higher importance. 
-- `TfidfVectorizer` is equivalent in spirit to applying `CountVectorizer` followed by TF-IDF reweighting. 
+- **TF-IDF** stands for **term frequency-inverse document frequency**. [bogotobogo](https://www.bogotobogo.com/python/NLTK/tf_idf_with_scikit-learn_NLTK.php)
+- It increases the influence of terms that are important in a document but not too common across the corpus. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- `TfidfVectorizer` is conceptually similar to applying count vectorization and then tf-idf reweighting. [topic-modeling.pythonhumanities](https://topic-modeling.pythonhumanities.com/02_03_setting_up_tf_idf.html)
 
-### Interpretation
-- Raw counts can overemphasize very common words.
-- TF-IDF often improves document classification by downweighting common corpus-wide terms and highlighting more discriminative terms. 
+### Why TF-IDF can help
+- Raw counts can overvalue terms that appear frequently in many documents. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- TF-IDF often improves feature usefulness by downweighting overly common terms and emphasizing more discriminative ones. [bogotobogo](https://www.bogotobogo.com/python/NLTK/tf_idf_with_scikit-learn_NLTK.php)
+
+### Common confusion
+- TF-IDF is still a vocabulary-based representation. [bogotobogo](https://www.bogotobogo.com/python/NLTK/tf_idf_with_scikit-learn_NLTK.php)
+- It is **not** the same thing as dense embeddings or deep contextual representations. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Data Validation and Splitting
 
-### K-fold Cross Validation
-- A method of evaluating a model by splitting the available training data into $k$ folds and repeating training/evaluation $k$ times. 
-- In each iteration, one fold is held out for evaluation and the remaining $k-1$ folds are used for training. 
-- The evaluation scores are then aggregated across folds to estimate model performance more robustly. 
+### Train / Dev / Test
+- **Train:** used to fit the model and learn representation parameters such as vocabulary and idf weights. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- **Validation / Dev:** used for model selection, tuning, or comparing alternatives. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- **Test:** used once at the end for final evaluation. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Important Clarification
-- In standard practice, cross-validation is typically performed on the training data for model selection or hyperparameter tuning. 
-- A separate **final test set** should still be held out for one-time final evaluation. 
+### Leakage rule
+- You must split the data **before** learning the vocabulary or tf-idf weights. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- If the vectorizer is fit on all data before splitting, information from validation or test documents leaks into the feature space. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- That leakage can make performance estimates look better than they really are. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Train/Dev/Test
-- The standard practice of partitioning a dataset into three distinct segments:
-  - **Train**: For fitting the model.
-  - **Validation (Dev)**: For tuning parameters and making adjustments.
-  - **Test**: For the final evaluation of the model.
+### K-fold cross validation
+- In **k-fold cross validation**, the training portion is divided into \(k\) folds, and the model is trained \(k\) times with a different held-out fold each time. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The scores across folds are aggregated to estimate performance more robustly. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Cross-validation is usually used for model selection on training data, not as a replacement for a final independent test set. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Leakage Rule
-- The vectorizer and any learned preprocessing statistics must be fit only on the training split within each experiment. 
-- Validation and test data should only be transformed using objects fit on training data, never used to build the vocabulary directly. 
+### Important implementation idea
+- Within each fold, the vectorizer should be fit only on that fold’s training partition, then applied to the held-out fold. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The same rule applies to tf-idf statistics and any learned preprocessing step. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Evaluation Metrics
 
-### Predicted vs. Actual Values
-- The foundation of evaluating classification models relies on comparing Predicted Values against Actual Values:
-  - **TP (True Positive)**: Predicted as Positive and true label is Positive.
-  - **TN (True Negative)**: Predicted as Negative and true label is Negative.
-  - **FP (False Positive)**: Predicted as Positive and true label is Negative.
-  - **FN (False Negative)**: Predicted as Negative and true label is Positive.
+### Confusion matrix terms
+- **TP:** predicted positive, actually positive. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- **TN:** predicted negative, actually negative. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- **FP:** predicted positive, actually negative. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- **FN:** predicted negative, actually positive. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Accuracy, Precision, Recall, and F1
+### Accuracy
+\[
+\text{Accuracy}=\frac{TP+TN}{TP+TN+FP+FN}
+\]
+- Accuracy is the proportion of all predictions that are correct. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- It is easy to understand, but it can be misleading when classes are imbalanced. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-- **Accuracy**
-  - The proportion of total correct predictions.
-  $$\text{Accuracy}=\frac{TP+TN}{TP+FP+FN+TN}$$
+### Precision
+\[
+\text{Precision}=\frac{TP}{TP+FP}
+\]
+- Precision asks: among predicted positives, how many were truly positive? [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- It matters more when false positives are costly. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-- **Precision**
-  - The proportion of predicted positives that are actually positive.
-  $$\text{Precision}=\frac{TP}{TP+FP}$$
+### Recall
+\[
+\text{Recall}=\frac{TP}{TP+FN}
+\]
+- Recall asks: among actual positives, how many were found? [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- It matters more when false negatives are costly. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-- **Recall**
-  - The proportion of actual positives that are identified correctly.
-  $$\text{Recall}=\frac{TP}{TP+FN}$$
+### F1 score
+\[
+F1=2\cdot\frac{\text{Precision}\cdot\text{Recall}}{\text{Precision}+\text{Recall}}
+\]
+- F1 combines precision and recall into one score using the harmonic mean. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- It is useful when both types of error matter and one number is needed for comparison. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-- **F1 Score**
-  - The harmonic mean of Precision and Recall.
-  $$F1=2\cdot\frac{\text{Precision}\cdot\text{Recall}}{\text{Precision}+\text{Recall}}$$
+### Metric selection rule
+- There is no universally best metric. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The correct metric depends on class balance and the practical cost of FP versus FN errors. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Interpretation Rules
-- **Accuracy** is easy to understand but can be misleading when classes are imbalanced, because a classifier can perform well on the majority class while missing many minority examples. 
-- **Precision** is especially important when false positives are costly. 
-- **Recall** is especially important when false negatives are costly. 
-- **F1** is useful when both precision and recall matter and a single combined score is needed. 
+***
 
-### Multiclass Note
-- In multiclass classification, precision, recall, and F1 are often aggregated using **micro**, **macro**, or **weighted** averaging. 
-- These averaging methods summarize per-class behavior in different ways and may produce different conclusions when classes are imbalanced. 
+## Likely Test Targets
+
+### High priority
+- Define **bag-of-words** clearly and state what it preserves versus what it loses. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Know what `CountVectorizer` does and what its output represents. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Know the difference between counts, binary features, and tf-idf weights. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Know why bag-of-words matrices are usually sparse. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Know why the vectorizer must be fit on training data only. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Know the meanings and formulas of accuracy, precision, recall, and F1. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Medium priority
+- Know what unigrams and bigrams are, and why bigrams can help with patterns like negation. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+- Know what `min_df`, `max_df`, and `binary=True` do conceptually. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Know the role of cross-validation versus a final test set. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Lower priority unless emphasized in quiz or code
+- Deep implementation details of sparse matrix internals. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Broader comparisons to neural embeddings unless the lecture explicitly tests them. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Generalized Rules
 
-### Representation Rules
-- Bag-of-words is a family of document representations based on vocabulary features, not just a single exact formula. 
-- Features may be raw counts, binary indicators, or tf-idf weights. 
-- N-grams extend bag-of-words by capturing short local sequences instead of only single tokens. 
+### Representation rules
+- Bag-of-words is a family of vocabulary-based representations, not just one exact formula. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The same document can be represented with counts, binary indicators, or tf-idf weights depending on the modeling goal. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Modeling Rules
-- A classifier trained on bag-of-words features learns correlations between vocabulary patterns and labels, not deep semantic understanding. 
-- Linear classifiers are commonly paired with bag-of-words because sparse text features work well with linear decision boundaries in many practical settings. 
+### Vocabulary rules
+- The vocabulary depends on tokenization, normalization, and frequency thresholds. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Once learned, the vocabulary fixes the feature dimensions for all future transformed documents. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Vocabulary Rules
-- The learned vocabulary depends on preprocessing choices, tokenization rules, and frequency thresholds. 
-- Unseen words at inference time do not create new columns; they are ignored unless the vocabulary is rebuilt. 
+### Modeling rules
+- A linear classifier on bag-of-words features learns statistical associations between feature patterns and labels. [bbengfort.github](https://bbengfort.github.io/2016/05/text-classification-nltk-sckit-learn/)
+- It does not “understand” text in a human-like semantic sense. [bbengfort.github](https://bbengfort.github.io/2016/05/text-classification-nltk-sckit-learn/)
 
-### Evaluation Rules
-- Model quality depends not only on the classifier, but also on feature design, data splitting, and metric choice. 
-- No single metric is always best; the right metric depends on the task and on the relative costs of false positives and false negatives. 
+### Evaluation rules
+- A good reported score depends on sound data splitting and leakage prevention, not just on the classifier choice. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Better metrics do not matter if the experimental setup is flawed. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Practical Rules
-- Always split data before learning vocabulary or feature weights. 
-- Use cross-validation for model selection when data is limited, but keep a final test set for final reporting when possible. 
-- Prefer tf-idf or filtered vocabularies when very common words dominate count-based features. 
+### Practical rules
+- Split first, fit later. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Learn vocabulary only from training data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Use validation or cross-validation for tuning. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Reserve test data for final evaluation. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Glossary
 
-### **Accuracy**
-- An evaluation metric representing the proportion of correct predictions out of all predictions.
-
 ### **Bag-of-words**
-- A document representation model that maps text to a vocabulary-based vector, usually ignoring most word order while preserving token occurrence information. 
-
-### **Binary Features**
-- A feature setting in which each term records only whether it appears, rather than how many times it appears. 
+- A text representation that maps each document to a vocabulary-based feature vector and usually ignores most word order. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
 
 ### **CountVectorizer**
-- A scikit-learn tool that converts a collection of text documents into a sparse matrix of token counts. 
-
-### **Cross-validation**
-- A model evaluation procedure that repeatedly splits training data into training and held-out folds to estimate performance more robustly. 
-
-### **Document-Term Matrix**
-- A matrix in which rows correspond to documents and columns correspond to vocabulary terms, with entries storing counts or weights. 
-
-### **F1 Score**
-- An evaluation metric that combines Precision and Recall using their harmonic mean.
-
-### **Feature Extraction**
-- The process of converting raw text into numeric representations suitable for machine learning models. 
-
-### **Inverse Document Frequency (IDF)**
-- A corpus-level weighting factor that reduces the influence of terms that appear in many documents. 
-
-### **K-fold Cross Validation**
-- A validation technique that partitions training data into $k$ folds, trains the model repeatedly, and evaluates on a different held-out fold in each iteration. 
-
-### **N-gram**
-- A contiguous sequence of $n$ tokens, such as a unigram or bigram, used as a text feature. 
-
-### **Precision**
-- An evaluation metric measuring how many predicted positive instances are actually positive.
-
-### **Recall**
-- An evaluation metric measuring how many actual positive instances are correctly identified.
-
-### **Sentiment Analysis**
-- A text classification task that predicts sentiment labels such as positive or negative from document content.
-
-### **Sparse Matrix**
-- A matrix representation optimized for data in which most entries are zero, which is common in text feature extraction. 
-
-### **TF-IDF**
-- A feature weighting scheme based on term frequency and inverse document frequency. 
+- A scikit-learn tool that converts documents into a sparse matrix of token counts. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
 ### **TfidfVectorizer**
-- A scikit-learn vectorizer that converts text documents directly into tf-idf-weighted feature vectors. 
-
-### **Train/Dev/Test**
-- The standard three-way split of data used to train, tune, and formally evaluate a model while reducing data leakage risk.
+- A scikit-learn tool that converts documents into tf-idf-weighted feature vectors. [topic-modeling.pythonhumanities](https://topic-modeling.pythonhumanities.com/02_03_setting_up_tf_idf.html)
 
 ### **Vocabulary**
-- The set of terms selected as features for a bag-of-words or tf-idf representation. 
+- The set of feature terms learned from training documents. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **Document-Term Matrix**
+- A matrix where rows are documents, columns are vocabulary terms, and entries are counts or weights. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **Sparse Matrix**
+- A matrix in which most values are zero, which is common for text features. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+
+### **Unigram**
+- A one-token feature. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **Bigram**
+- A two-token adjacent sequence used as a feature. [pages.github.rpi](https://pages.github.rpi.edu/kuruzj/website_introml_rpi/notebooks/08-intro-nlp/03-scikit-learn-text.html)
+
+### **Binary Feature**
+- A feature that records only whether a term appears, not how many times it appears. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **TF-IDF**
+- A term-weighting scheme that emphasizes terms important to a document but less common across the corpus. [bogotobogo](https://www.bogotobogo.com/python/NLTK/tf_idf_with_scikit-learn_NLTK.php)
+
+### **Leakage**
+- Accidental use of non-training information during fitting, which can inflate evaluation results. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **Cross-validation**
+- Repeated train/validation splitting used to estimate performance more robustly on training data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **Precision**
+- The fraction of predicted positives that are truly positive. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **Recall**
+- The fraction of actual positives that are correctly identified. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **F1 Score**
+- The harmonic mean of precision and recall. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **Accuracy**
+- The fraction of all predictions that are correct. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
+
+## Best improvements from your original version
+
+The main upgrades are:
+- stronger emphasis on **fit vs transform**, **training-only vocabulary learning**, and **leakage**, because those are highly testable implementation ideas. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- sharper distinction between **counts**, **binary features**, **n-grams**, and **tf-idf**, which are exactly the kinds of “what does this do?” concepts that often show up in quizzes. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- a dedicated **Likely Test Targets** section, since Week 1 suggests your instructor likes direct definitional and operational questions. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+If you want, send the next Week 2 section — probably **Bag of Words Representations** — and I’ll keep rewriting it in the same calibrated style so the whole week stays consistent before Quiz 2. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
 ---
 
-# Lecture Material: Bag of Words Representations
+Here’s a tighter, more quiz-oriented rewrite of **Lecture Material: Bag of Words Representations**. The main improvements are: sharper separation of **assumption vs implementation**, clearer formulas and what they mean, stronger connection to **Week 1’s “term definition” theme**, and more emphasis on distinctions the instructor is likely to test, such as **binary vs TF vs TF-IDF**, **document frequency vs term frequency**, and **why sparsity is unavoidable in text features**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+## Lecture Material: Bag of Words Representations
+
+* **Summary:** This lecture explains how documents are converted into feature vectors under the **bag-of-words assumption**. The two main design choices are **what counts as a term** and **how each term is weighted**, and those choices determine what information the model keeps, what it ignores, and how useful the resulting representation is for classification. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+* **Why this lecture matters:** Week 1 focused on preprocessing and term definition, while this lecture shows how those decisions become actual vector features. In practice, bag-of-words is not one single formula but a family of representations built from a vocabulary plus a weighting scheme such as **binary**, **TF**, or **TF-IDF**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+* **Likely testing style:** Based on Quiz 1, expect questions that ask for **clean definitions, formula meanings, what each weighting scheme keeps or loses, and the difference between document-level importance and corpus-level rarity**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+***
 
 ## Table of Contents
 - [Course and Lecture Context](#course-and-lecture-context)
@@ -315,317 +393,347 @@ $$
 - [Inverse Document Frequency (IDF)](#inverse-document-frequency-idf)
 - [TF-IDF Weighting and Zipf's Law](#tf-idf-weighting-and-zipfs-law)
 - [Sparse Representation](#sparse-representation)
+- [Likely Test Targets](#likely-test-targets)
 - [General Rules](#general-rules)
 - [Summary of Bag of Words](#summary-of-bag-of-words)
 - [Glossary](#glossary)
+
+***
 
 ## Course and Lecture Context
 
 ### Lecture Title
 - **Bag of Words Representations**
 
-### Purpose
-- The lecture details the implementation of Bag-of-Words representations for text classification.
-- It explores how to convert text into machine-actionable vectors by defining terms and assigning them mathematical weights.
-- It emphasizes that representation is a modeling choice: different definitions of terms and different weighting schemes can produce very different feature spaces.
+### Core focus
+- This lecture explains how to represent each document as a fixed-length numeric vector over a vocabulary. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- The central idea is that representation depends on two modeling choices: **term definition** and **term weighting**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Goals
-- Explain the bag-of-words assumption.
-- Describe how documents are converted into vectors over a vocabulary.
-- Compare binary, TF, and TF-IDF weighting.
-- Understand why normalization and document frequency matter.
-- Recognize the strengths and limits of bag-of-words representations.
+### Main goal
+- Understand how the bag-of-words assumption produces a feature space for machine learning. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Compare the main weighting schemes and understand when each one is useful. [geeksforgeeks](https://www.geeksforgeeks.org/nlp/bag-of-words-vs-tf-idf/)
+
+### Bridge from Week 1
+- Week 1 asked, “What is a term?” and introduced tokenization, stemming, lemmatization, phrase mining, and Zipf’s law. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- This lecture extends that idea by showing that once terms are chosen, every document can be mapped into a vector whose entries are weights for those terms. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+***
 
 ## Bag of Words Assumption
 
-### Core Concept
-- The fundamental assumption of this model is to **ignore word ordering but keep the terms and their weights**.
-- In the simplest setting, the weights are based on whether a term appears or how often it appears.
-- The representation treats a document as a collection, or “bag,” of terms rather than a sequence.
+### Core assumption
+- The **bag-of-words assumption** is that a document can be represented by its terms and their weights while mostly ignoring word order. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- In other words, the model treats text as a collection of terms rather than a sequence with syntax and long-range structure. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Interpretation
-- Word order, syntax, and long-range context are mostly discarded.
-- Documents with similar term counts can receive similar representations even if their phrasing differs.
-- This simplification often works well for classification, but it cannot capture all aspects of meaning.
+### What this preserves
+- Which terms appear. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- How often they appear, if count-based weights are used. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Some short local order, if n-grams are included instead of only single words. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### General Rule
-- Bag-of-words is useful when the presence or frequency of terms matters more than exact grammar or sentence structure.
-- Bag-of-words is less suitable when word order is essential to meaning, such as in cases of negation, compositional semantics, or syntax-heavy tasks.
+### What this loses
+- Most sentence structure and grammar. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Most long-distance dependencies and compositional meaning. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Important contrasts that depend on order, unless the chosen features explicitly encode them. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+### Key consequence
+- Two documents can get similar vectors if they contain similar terms, even if their exact phrasing differs. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- This simplification often works well for classification, but it cannot fully model nuance, negation, or syntax-sensitive meaning. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+***
 
 ## Terms and Vocabulary
 
-### What Is a Term?
-- A **term** is the basic unit used as a feature in the vector representation.
-- Depending on preprocessing and modeling choices, a term may be:
-  - A word
-  - A stemmed word
-  - A lemmatized word
-  - A phrase
-  - An n-gram
-  - Another normalized textual unit
+### What is a term?
+- A **term** is the basic feature unit used in the vector representation. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Depending on preprocessing and modeling choices, a term can be a word, stem, lemma, phrase, or n-gram. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Vocabulary
-- The **vocabulary** is the full set of terms used as feature dimensions.
-- If the vocabulary is $V=\{v_1,v_2,\dots,v_n\}$, then every document is represented as a vector of length $n$.
+### What is a vocabulary?
+- The **vocabulary** is the set of all terms used as feature dimensions. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- If the vocabulary is \(V=\{v_1,v_2,\dots,v_n\}\), then each document is represented as a vector of length \(n\). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### General Rules
-- The vocabulary depends on preprocessing choices such as tokenization, stemming, lemmatization, stop-word removal, phrase mining, and frequency filtering.
-- Changing the vocabulary changes the feature space, which can change model performance.
-- Terms not included in the vocabulary do not contribute to the final vector.
+### Why vocabulary matters
+- The vocabulary is not neutral; it depends on tokenization, normalization, stop-word handling, phrase construction, and frequency filtering. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Changing the vocabulary changes the feature space, which can change model behavior and performance. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+### Important rule
+- If a term is not in the vocabulary, it contributes nothing to the final vector. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- This means vocabulary design is part of modeling, not just preprocessing cleanup. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+***
 
 ## Weighting Schemes
 
-### How to Define Weights?
-- Weights should reflect the importance of a term in a document.
-- Common choices include:
-  - **Binary**
-  - **Term Frequency (TF)**
-  - **TF-IDF**
+### Core question
+- Once terms are defined, the next question is: **how much weight should each term receive in each document?** [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### General Principle
-- A good weighting scheme gives higher values to terms that are more informative for distinguishing documents.
-- Different tasks may favor different weighting schemes:
-  - Binary weights often work well when presence matters more than repetition.
-  - Raw TF helps when repeated occurrence carries useful signal.
-  - TF-IDF helps when common corpus-wide words should be downweighted.
+### Main options
+- **Binary:** records whether the term appears. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- **TF:** records how often the term appears in the document. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- **TF-IDF:** combines document-level frequency with corpus-level rarity. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### General Rule
-- The weighting scheme is part of the model design, not just a formatting choice.
-- There is no single universally best weighting scheme; performance depends on the task, corpus, and classifier.
+### Main principle
+- A weighting scheme should give larger values to terms that are more informative for distinguishing documents. [geeksforgeeks](https://www.geeksforgeeks.org/nlp/bag-of-words-vs-tf-idf/)
+- Different tasks may prefer different weighting rules, so weighting is a modeling choice rather than a fixed standard. [geeksforgeeks](https://www.geeksforgeeks.org/nlp/bag-of-words-vs-tf-idf/)
+
+### Testable distinction
+- **Binary** asks “Did it appear?” [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- **TF** asks “How often did it appear in this document?” [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- **IDF** asks “How rare is it across the corpus?” [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- **TF-IDF** combines the last two ideas. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+***
 
 ## Binary Bag-of-Words
 
 ### Definition
-- In binary bag-of-words, each feature records whether a term appears at least once in the document.
-- Given a vocabulary $V=\{v_1,v_2,\dots,v_n\}$ and document $d=(w_1,w_2,\dots,w_m)$, the vector is:
+- In **binary bag-of-words**, each feature is 1 if the term appears at least once and 0 otherwise. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-$$
+\[
 x_{d,i}=
 \begin{cases}
-1 & \exists j \text{ such that } v_i=w_j \
+1 & \text{if term } v_i \text{ appears in document } d \\
 0 & \text{otherwise}
 \end{cases}
-$$
+\]
 
 ### Interpretation
-- This representation ignores repeated occurrences after the first appearance.
-- It captures **presence/absence**, not intensity.
+- Binary weighting captures **presence/absence** only. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Repetition after the first occurrence does not increase the feature value. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### General Rules
-- Binary weighting is often helpful when repeated use of a term adds little extra information.
-- Binary weighting can be more robust than raw counts for short texts or highly repetitive texts.
-- Binary weighting loses information about emphasis through repetition.
+### When it helps
+- Binary features are useful when occurrence matters more than repetition. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- They can also be more robust than raw counts for short texts or repetitive texts where repeated words add little new information. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+### Limitation
+- Binary weighting throws away intensity information, so it cannot distinguish “appears once” from “appears twenty times.” [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+***
 
 ## Term Frequency (TF) Variants
 
-### From Binary to TF
-- Moving beyond binary, weights can be assigned based on **frequency**: how many times a term appears in a document.
-- The count-based vector representation is:
+### Basic count form
+- A simple count-based bag-of-words feature records how many times a term occurs in a document. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-$$
+\[
 x_{d,i}=|\{j \mid w_j=v_i\}|
-$$
+\]
 
-### Core Idea
-- A term is often considered more important if it occurs more frequently in a document.
-- Let $f(t,d)$ be the raw frequency of term $t$ in document $d$.
+### Core idea
+- If a term appears more often in a document, that may indicate stronger relevance to that document. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Let \(f(t,d)\) denote the raw count of term \(t\) in document \(d\). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### Popular Variants
-- **Raw TF:** $TF(t,d)=f(t,d)$
-- **Log TF:** $TF(t,d)=\log(f(t,d)+1)$
-- **Maximum Frequency Normalization:** $TF(t,d)=0.5+0.5\times \frac{f(t,d)}{MaxFreq(d)}$
-- **BM25-style TF normalization:** adjusts term frequency based on document length so long documents are not automatically favored
+### Common variants
+- **Raw TF:** \(TF(t,d)=f(t,d)\) [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- **Log TF:** \(TF(t,d)=\log(f(t,d)+1)\) [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- **Maximum-frequency normalization:** scales counts relative to the most frequent term in the document. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- **Length-normalized or BM25-style TF:** reduces the advantage long documents get from simply having more words. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Why Variants Exist
-- Repeating a word 20 times is usually not 20 times more informative than using it once.
-- Raw counts can overemphasize long or repetitive documents.
-- TF normalization tries to preserve signal from repetition without letting verbosity dominate.
+### Why variants exist
+- Repeating a word many times does not usually make it proportionally more informative. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Raw counts can bias the model toward longer or more repetitive documents. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Normalized TF variants try to preserve useful repetition while reducing document-length bias. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### General Rules
-- Raw TF is simple and interpretable, but it can bias the model toward longer documents.
-- Log TF reduces the effect of repeated occurrences by making additional repetitions contribute less than earlier ones.
-- Length-normalized variants are useful when documents vary substantially in size.
-- TF weighting assumes repeated occurrence provides some additional evidence, but usually with diminishing returns.
+### General rule
+- If document lengths vary a lot, normalized TF is usually safer than raw counts. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- If repetition itself is meaningful, count-based TF may still help. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Normalization
-- Normalization is critical because repeated occurrences are generally less informative than the first occurrence.
-- Good normalization reduces bias from document length while preserving meaningful differences in emphasis.
-
-### General Rule
-- If document lengths vary widely, normalized TF variants are usually safer than raw counts.
-- If repetition is highly informative in the task, raw or lightly normalized TF may still work well.
+***
 
 ## Inverse Document Frequency (IDF)
 
-### Concept
-- The core idea is that a term is more discriminative if it appears in fewer documents across the corpus.
-- Let $df_D(t)$ be the number of documents in corpus $D$ that contain term $t$.
+### Core concept
+- **IDF** measures how informative a term is across the full corpus by looking at how many documents contain it. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Let \(df_D(t)\) be the number of documents in corpus \(D\) that contain term \(t\). [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
 ### Intuition
-- A term that appears in nearly every document is usually less helpful for distinguishing among documents.
-- A term that appears in only a subset of documents is often more informative.
+- A term that appears in almost every document is usually less useful for distinguishing documents. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- A term that appears only in some documents is often more discriminative. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### Variants of IDF
-- **Log IDF:** $IDF(t)=1+\log\left(\frac{|D|}{df_D(t)}\right)$
-- **Smoothed IDF:** $IDF(t)=\log\left(\frac{|D|+1}{df_D(t)+0.5}\right)$
+### Typical form
+- A common form is logarithmic, such as \(IDF(t)=\log\left(\frac{N}{df(t)}\right)\) or a smoothed variant. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- In scikit-learn-style explanations, idf reduces the weight of corpus-common terms and boosts the weight of rarer ones. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### General Rules
-- IDF downweights common terms and upweights rarer terms.
-- Extremely common terms often receive low IDF because they provide little discriminative value.
-- Extremely rare terms may receive very high IDF, but they are not always useful if they are noise, misspellings, or accidental one-offs.
-- IDF is corpus-dependent: the same term can receive different weights in different collections.
+### Important distinction
+- **Term frequency** is document-specific. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- **Document frequency** is corpus-wide. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Students often confuse these, so keep them separate. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+### Caution
+- Very rare terms may get large IDF values, but rarity alone does not guarantee usefulness. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Rare misspellings, noise, or one-off tokens can be highly weighted but still unhelpful. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+***
 
 ## TF-IDF Weighting and Zipf's Law
 
-### TF-IDF Weighting
-- Combining both metrics yields:
+### TF-IDF definition
+- **TF-IDF** combines term frequency and inverse document frequency. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-$$
+\[
 Weight(t,d)=TF(t,d)\times IDF(t)
-$$
-
-- A term receives a **high weight** when it is common in a specific document but rare in the overall collection.
+\]
 
 ### Interpretation
-- TF captures **document-specific importance**.
-- IDF captures **corpus-level discriminativeness**.
-- TF-IDF combines both local and global information.
+- TF captures how important a term is within one document. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- IDF captures how discriminative that term is across the corpus. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- TF-IDF assigns large weights to terms that are common in a document but not common everywhere. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### General Rules
-- TF-IDF is often a strong default for document classification and retrieval.
-- TF-IDF is especially helpful when raw counts are dominated by frequent generic words.
-- TF-IDF is still a bag-of-words model, so it does not solve the loss of word order or syntax.
+### Why TF-IDF is popular
+- It often works better than raw counts when frequent generic words dominate the corpus. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- It is still simple, interpretable, and compatible with sparse linear models. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### Zipf's Law (Revisit)
-- Zipf's Law states that:
+### Zipf connection
+- Zipf’s law says word frequency is inversely related to rank, so a few words are extremely common and many words are very rare. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- This helps explain why both extremes can be problematic: very common words often carry little discriminative value, while very rare words may be sparse or noisy. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
-$$
-\text{Rank} \times \text{Frequency} \approx \text{Constant}
-$$
+### Practical takeaway
+- Mid-frequency content words are often more useful than either stopwords or one-off rare tokens. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- TF-IDF helps rebalance the feature space so that common words do not dominate solely because of frequency. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-- A common functional form is:
-
-$$
-F(w)=\frac{C}{r(w)^{\alpha}}
-$$
-
-### Connection to Bag-of-Words
-- **Stop words** occupy the highest-frequency region.
-- The most useful content words often lie in the middle of the distribution.
-- Very rare words form a long tail.
-
-### General Rules
-- High-frequency words are often too common to be discriminative.
-- Very low-frequency words may be too sparse, noisy, or corpus-specific to be reliable.
-- Mid-frequency words are often the most useful features in classical text mining.
-- TF-IDF helps rebalance the influence of terms across the Zipfian frequency distribution.
+***
 
 ## Sparse Representation
 
-### Sparse Vector/Matrix
-- In bag-of-words models, the vocabulary is usually very large, but each document contains only a small fraction of the terms.
-- Therefore, most entries in a document vector are zero.
+### Why sparsity happens
+- The vocabulary in text mining is usually large, but each document uses only a small subset of those terms. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- That means most entries in a document vector are zero. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Why Sparsity Matters
-- Sparse vectors and sparse matrices store only non-zero values.
-- This makes bag-of-words modeling computationally feasible even for large vocabularies.
+### What sparse means
+- A **sparse vector** or **sparse matrix** stores mainly the non-zero values instead of every zero explicitly. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- This makes large bag-of-words feature spaces computationally feasible. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### General Rules
-- Sparse data structures are the standard representation for bag-of-words models.
-- Efficient storage and computation become increasingly important as the vocabulary grows.
-- Many classical linear models work especially well with sparse text features.
+### Why this matters
+- Without sparse storage, bag-of-words matrices can become too large to handle efficiently. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Many classical linear text models are especially effective with high-dimensional sparse inputs. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+### Key rule
+- Sparsity is not an accident in bag-of-words; it is a normal structural property of text features. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+***
+
+## Likely Test Targets
+
+### High priority
+- Define the **bag-of-words assumption** clearly. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Distinguish **term**, **vocabulary**, **TF**, **DF**, **IDF**, and **TF-IDF**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Explain what binary weighting captures versus what TF captures. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Explain why very common words get lower value under IDF. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Explain why bag-of-words vectors are sparse. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+### Medium priority
+- Know why TF variants exist and what problem normalization is trying to solve. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Know the conceptual link between Zipf’s law and term filtering or reweighting. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- Know that vocabulary design depends on preprocessing choices from Week 1. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+### Likely quiz traps
+- Confusing **term frequency** with **document frequency**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Treating TF-IDF as if it preserves syntax or deep semantics. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Forgetting that binary bag-of-words ignores repeated occurrences after the first. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Assuming rare terms are always useful just because their IDF is high. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+***
 
 ## General Rules
 
-### Representation Design
-- A bag-of-words model depends on two choices:
-  - How to define the terms
-  - How to assign the weights
-- Both choices affect interpretability, sparsity, and downstream model performance.
+### Representation design
+- A bag-of-words representation depends on both **term definition** and **weight definition**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Those two design choices strongly affect interpretability, sparsity, and classification performance. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### Preprocessing Dependence
-- Bag-of-words quality depends strongly on preprocessing.
-- Tokenization, stemming, lemmatization, stop-word removal, frequency filtering, and phrase construction all change the final vectors.
+### Frequency effects
+- Very common words are often weak discriminators. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Very rare words may be noisy or unreliable. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Filtering and weighting help manage both extremes. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### Frequency Effects
-- Very common words tend to be less useful for discrimination.
-- Very rare words may be too sparse or noisy.
-- Weighting and filtering are used to balance these extremes.
+### Independence simplification
+- Bag-of-words effectively treats terms as mostly independent features once vectorized. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- This is useful computationally, but it ignores many interactions among words and phrases. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Independence Assumption
-- Bag-of-words effectively assumes that terms contribute independently once converted into vector features.
-- This simplification is useful in practice, but it ignores syntax, compositional meaning, and interactions among distant words.
+### Task dependence
+- No single weighting scheme is always best. [geeksforgeeks](https://www.geeksforgeeks.org/nlp/bag-of-words-vs-tf-idf/)
+- Binary, TF, and TF-IDF should be viewed as design options matched to the task and corpus. [geeksforgeeks](https://www.geeksforgeeks.org/nlp/bag-of-words-vs-tf-idf/)
 
-### Task Dependence
-- No single term definition or weighting scheme is always best.
-- Binary, TF, and TF-IDF should be understood as task-dependent design options rather than universally correct choices.
+### Practical rules
+- Use **binary** when presence matters more than repetition. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Use **TF** when repetition carries signal. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Use **TF-IDF** when common words need to be downweighted. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Expect tradeoffs between simplicity, interpretability, and expressive power. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Practical Rules
-- Use binary features when presence matters more than repetition.
-- Use TF when repetition carries useful signal.
-- Use TF-IDF when common corpus-wide words should be downweighted.
-- Use sparse representations for efficient storage and computation.
-- Expect tradeoffs between simplicity, interpretability, and expressive power.
+***
 
 ## Summary of Bag of Words
 
-### Pros
-- Empirically effective in practice.
-- Intuitive to understand.
-- Easy to implement.
-- Works well with large vocabularies and sparse linear models.
-- Often provides a strong baseline for document classification tasks.
+### Strengths
+- Simple and intuitive. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Easy to implement at scale. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- Works well with sparse linear models and provides a strong baseline for text classification. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### Cons
-- Ignores syntax and most word order.
-- Assumes term independence.
-- Requires design choices for preprocessing, vocabulary definition, weighting, and filtering.
-- Can struggle with negation, phrase-level meaning, and semantic similarity.
-- Rare-word noise and high-frequency stop words must be handled carefully.
+### Weaknesses
+- Ignores most syntax and word order. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Can struggle with negation, compositional meaning, phrase-level semantics, and word sense ambiguity. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Requires careful choices about preprocessing, vocabulary design, and weighting. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Tips
-- A **Sparse Vector/Matrix** is your best friend in vector space modeling.
-- Mid-frequency terms are often more useful than extremely common or extremely rare ones.
-- TF-IDF is often a strong baseline, but it is not automatically best for every dataset.
-- Always treat vocabulary design and weighting as modeling decisions, not fixed defaults.
+### Best mental model
+- Bag-of-words is not “the model understands language.” [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- It is “the model sees a weighted vocabulary footprint of each document.” [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+***
 
 ## Glossary
 
 ### **Bag-of-words Assumption**
-- The modeling simplification where word ordering is ignored and a document is represented through its terms and their weights.
-
-### **Binary Bag-of-Words**
-- A bag-of-words weighting scheme in which each feature indicates only whether a term appears in a document.
-
-### **BM25-style TF**
-- A term-frequency variant that normalizes word counts by document length so longer documents do not dominate simply due to verbosity.
-
-### **Inverse Document Frequency (IDF)**
-- A corpus-level weighting factor that increases the importance of terms that occur in fewer documents.
-
-### **Sparse Vector/Matrix**
-- A data structure that stores only non-zero feature values, making large bag-of-words representations practical.
+- The assumption that a document can be represented by its terms and weights while mostly ignoring word order. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
 ### **Term**
-- A textual unit used as a feature in a bag-of-words model, such as a word, stem, lemma, phrase, or n-gram.
-
-### **Term Frequency (TF)**
-- A weighting scheme based on how many times a term appears within a document.
-
-### **TF-IDF**
-- A combined weighting scheme that highlights terms that are frequent in a document but relatively rare across the corpus.
+- A textual unit used as a feature, such as a word, stem, lemma, phrase, or n-gram. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
 ### **Vocabulary**
-- The complete set of terms used as dimensions in the vector representation.
+- The set of feature terms used as dimensions in the vector representation. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
-### **Zipf's Law**
-- An empirical pattern in language showing that a word’s frequency is inversely related to its rank, which helps explain why both very common and very rare words can be problematic in text mining.
+### **Binary Bag-of-Words**
+- A representation in which each feature records only whether a term appears. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+### **Term Frequency (TF)**
+- A document-level weighting based on how often a term occurs in one document. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+### **Document Frequency (DF)**
+- The number of documents in the corpus that contain a term. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+
+### **Inverse Document Frequency (IDF)**
+- A corpus-level weighting factor that increases the importance of terms appearing in fewer documents. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+### **TF-IDF**
+- A weighting scheme that combines document-level frequency with corpus-level rarity. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+### **Sparse Vector/Matrix**
+- A representation that stores mainly non-zero values because most entries are zero. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+### **Zipf’s Law**
+- The empirical pattern that word frequency decreases roughly as rank increases, explaining why text contains both extremely common and very rare words. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+
+***
+
+## What I improved
+
+The biggest upgrades from your draft are:
+- making **TF vs DF vs IDF** much more explicit, because that is a classic quiz target. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- tying the section directly back to **Week 1 term-definition choices**, so the course narrative stays coherent. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- adding **Likely Test Targets** and **quiz traps**, which fits the instructor pattern suggested by Quiz 1. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+Send the next Week 2 section whenever you want, and I’ll keep this same calibrated style so the whole study guide stays consistent. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
 ---
 
-# Lecture Material: Building Linear Classifiers
+Here’s an improved, more test-ready rewrite of **Lecture Material: Building Linear Classifiers**. The main upgrade is that it now emphasizes the distinctions most likely to be quizzed: **linear score vs transformed output**, **regression vs classification**, **square loss vs log loss**, **why logistic regression fits text classification well**, and **how thresholds affect evaluation without changing the model itself**. Those are the kinds of clean conceptual contrasts that fit the Week 1 quiz style and naturally follow Week 2’s bag-of-words material. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
 
-* **Summary:** This lecture explains how to move from text representations, such as bag-of-words vectors, to predictive models. It introduces linear prediction, Ordinary Least Squares for regression, Logistic Regression for classification, and practical rules for training and evaluating linear models on high-dimensional text data.
+## Lecture Material: Building Linear Classifiers
+
+* **Summary:** This lecture explains how numeric text representations, such as bag-of-words or tf-idf vectors, are turned into predictions using **linear models**. The core progression is: compute a linear score from input features, choose an output interpretation appropriate to the task, and train the model with a loss function that matches that task. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+* **Why this lecture matters:** After building representations, the next question is how to map those vectors to labels. In Week 2, the key comparison is between **Ordinary Least Squares (OLS)** for continuous regression targets and **Logistic Regression** for binary classification, especially for sparse text data like sentiment analysis. [kb.osu](https://kb.osu.edu/bitstreams/5c7cd0a0-48b1-5fa3-9e62-b0c9b658105a/download)
+
+* **Likely testing style:** Expect questions that ask you to distinguish **linear prediction from logistic prediction**, **square loss from log loss**, **real-valued outputs from probability outputs**, and **probability thresholds from the learned model itself**. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+
+***
 
 ## Table of Contents
 - [Course and Lecture Context](#course-and-lecture-context)
@@ -636,433 +744,501 @@ $$
 - [Logistic Regression for Classification](#logistic-regression-for-classification)
 - [Using Logistic Regression for Bounded Regression](#using-logistic-regression-for-bounded-regression)
 - [Logistic Regression for Sentiment Analysis](#logistic-regression-for-sentiment-analysis)
+- [Likely Test Targets](#likely-test-targets)
 - [General Rules](#general-rules)
 - [Glossary](#glossary)
+
+***
 
 ## Course and Lecture Context
 
 ### Lecture Title
 - **Building Linear Classifiers**
 
-### Summary
-- Extends the discussion of text classification and evaluation.
-- Builds upon bag-of-words representations to implement machine learning models.
-- Focuses specifically on building linear models, including Ordinary Least Squares and Logistic Regression, using these text features.
-- Emphasizes the relationship between model choice, loss function, prediction type, and evaluation.
+### Core focus
+- This lecture moves from **representation** to **prediction**. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Once each document has been converted to a feature vector, a linear model can assign weights to features and use those weights to predict a target value or class. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### Goals
-- Understand how linear models map feature vectors to predictions.
-- Distinguish regression from classification settings.
-- Describe the prediction functions and loss functions used in OLS and Logistic Regression.
-- Apply linear models to sparse, high-dimensional text features.
-- Recognize the assumptions, strengths, and limitations of linear classifiers.
+### Main goal
+- Understand how a weighted sum of features becomes a prediction. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Distinguish when that score should be interpreted as an unbounded numeric output versus a probability-like output for classification. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+
+### Week 2 connection
+- Bag-of-words and tf-idf define the feature space. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Linear models learn how each feature contributes to the final prediction in that space. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
+
+***
 
 ## Building Linear Classifiers
 
-### Main Topic
-- The transition from representing text data to training predictive models.
+### Main idea
+- A linear model computes a weighted combination of input features and then uses that score for prediction. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- The same basic linear score can support different tasks depending on the output transformation and loss function. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
 
-### Purpose
-- To understand how to take a feature vector, such as a bag-of-words representation, and apply mathematical models to predict outcomes.
-- These outcomes may be:
-  - Continuous values, as in regression
-  - Discrete categories, as in classification
+### Prediction intuition
+- A large positive weight means that feature pushes the score upward. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- A large negative weight means that feature pushes the score downward. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- The bias or intercept shifts the prediction even when all feature values are zero. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### Core Idea
-- A linear model computes a weighted combination of input features and optionally applies a transformation to that score.
-- The model learns weights that make predictions align as closely as possible with observed labels.
+### Why this works for text
+- Text feature spaces are often high-dimensional and sparse, which makes linear methods attractive computationally. [web.stanford](https://web.stanford.edu/~jurafsky/slp3/4.pdf)
+- In many text classification problems, useful signal is distributed across many vocabulary features rather than a small number of dense variables. [web.stanford](https://web.stanford.edu/~jurafsky/slp3/4.pdf)
 
-### General Interpretation
-- Features with larger positive weights push predictions upward or toward the positive class.
-- Features with larger negative weights push predictions downward or toward the negative class.
-- The intercept or bias term shifts the prediction even when all feature values are zero.
+***
 
 ## Linear Prediction
 
-### General Form
-- A linear prediction function combines features and weights:
-
-$$
+### General form
+\[
 \hat{y}_{i}=\sum_{j=1}^{d} x_{i,j} w_j + b
-$$
+\]
 
-- $x_i$ is the feature vector of the $i$-th instance.
-- $d$ is the number of feature dimensions.
-- $w_j$ is the weight for feature $j$.
-- $b$ is the bias or intercept.
-- $\hat{y}_i$ is the predicted score.
+- \(x_i\) is the feature vector for instance \(i\). [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- \(w_j\) is the learned weight for feature \(j\). [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- \(b\) is the intercept or bias term. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- \(\hat{y}_i\) is the model’s score or prediction. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
 ### Interpretation
-- Each feature contributes proportionally to its value and weight.
-- The prediction is additive: each feature pushes the score independently.
-- In text classification, the input vector is often sparse, so only a small number of terms contribute for any given document.
+- Each feature contributes additively according to its value and weight. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- In sparse text data, most feature values are zero, so only a small subset of terms contributes for any one document. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
 
-### General Rules
-- Linear models are especially effective when useful information is distributed across many sparse features.
-- The sign and magnitude of a weight indicate how that feature influences the prediction.
-- Linear prediction itself is not limited to classification or regression; the task is determined by the output interpretation and the loss function.
+### Key distinction
+- A linear score by itself is just a numeric quantity. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Whether it is used for regression or classification depends on how the score is interpreted and what loss function is optimized. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+
+***
 
 ## Ordinary Least Square (OLS) Regression
 
-### OLS: Example
-- A classic example involves a dataset detailing the average heights and weights for American women aged 30–39.
-- **Goal:** Build a mathematical relationship between Weight and Height:
+### Purpose
+- **Ordinary Least Squares** is a linear regression method used when the target variable is continuous. [kb.osu](https://kb.osu.edu/bitstreams/5c7cd0a0-48b1-5fa3-9e62-b0c9b658105a/download)
+- It predicts an unbounded real-valued output from the linear score. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
 
-$$
-Weight = f(Height)
-$$
-
-### OLS: Linear Prediction
-- OLS uses the linear prediction rule:
-
-$$
+### Prediction rule
+\[
 \hat{y}_{i}=\sum_{j=1}^{d}x_{i,j}w_{j}+b
-$$
+\]
 
-### OLS: Square Loss Function
-- **Square Loss for the $i^{th}$ instance:**
-
-$$
+### Square loss
+- For one instance: [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+\[
 l(y_i,\hat{y}_i)=(y_i-\hat{y}_i)^2
-$$
+\]
 
-- **Square loss for all $n$ instances:**
-
-$$
+- For all training instances: [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+\[
 L=\sum_{i=1}^{n}(y_i-\hat{y}_i)^2
-$$
+\]
 
 ### Interpretation
-- OLS chooses parameters that minimize the sum of squared prediction errors.
-- Squaring makes larger errors contribute disproportionately more than smaller ones.
-- Because of this, OLS is sensitive to large errors and outliers.
+- OLS chooses weights that minimize the total squared error. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Squaring means large errors are penalized more heavily than small errors. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Because of that, OLS can be sensitive to outliers or unusually large mistakes. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
 
-### General Rules
-- OLS is a regression model, not a probability model.
-- OLS predicts unbounded real values, so it is appropriate when the target is continuous.
-- Square loss strongly penalizes large deviations, which can be useful when large errors are especially undesirable.
-- OLS assumes the target is numeric and that a linear relationship is a reasonable approximation.
+### Important rule
+- OLS is appropriate when the target is numeric and unbounded or naturally continuous. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- It is not a probability model, and its outputs are not constrained to lie between 0 and 1. [kb.osu](https://kb.osu.edu/bitstreams/5c7cd0a0-48b1-5fa3-9e62-b0c9b658105a/download)
 
-### OLS via sklearn
-- The standard OLS implementation minimizes square loss.
-- In its basic form, it does not impose regularization.
-- Parallelization parameters may affect training efficiency, but not the mathematical objective.
+***
 
 ## From OLS to Logistic Regression
 
-### Why OLS Is Not Enough for Classification
-- In binary classification, labels are discrete, often 0 or 1.
-- A plain linear predictor can output any real number, including values below 0 or above 1.
-- This makes raw OLS outputs difficult to interpret as probabilities.
+### Why OLS is not ideal for binary classification
+- In binary classification, the label is typically 0 or 1. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- A plain linear model can output any real number, including values below 0 or above 1. [kb.osu](https://kb.osu.edu/bitstreams/5c7cd0a0-48b1-5fa3-9e62-b0c9b658105a/download)
+- That makes OLS awkward for predicting class probabilities. [kb.osu](https://kb.osu.edu/bitstreams/5c7cd0a0-48b1-5fa3-9e62-b0c9b658105a/download)
 
-### Logistic Prediction
-- Logistic Regression applies a sigmoid transformation to the linear score:
+### Logistic idea
+- Logistic Regression keeps the linear score but applies a **sigmoid** transformation to map that score into the interval \((0,1)\). [web.stanford](https://web.stanford.edu/~jurafsky/slp3/4.pdf)
 
-$$
+\[
 \hat{y}_{i}=\sigma\left(\sum_{j=1}^{d}x_{i,j}w_j+b\right)
-$$
+\]
 
-- $\hat{y}_i$ is now interpreted as a probability-like quantity $\in [0,1]$
-
-### Sigmoid Function
-- The sigmoid function maps any real-valued input into the interval $(0,1)$:
-
-$$
-\sigma(x)=\frac{e^x}{e^x+1}=\frac{1}{1+e^{-x}}
-$$
+### Sigmoid function
+\[
+\sigma(x)=\frac{1}{1+e^{-x}}
+\]
 
 ### Interpretation
-- Large positive scores map to values near 1.
-- Large negative scores map to values near 0.
-- Scores near 0 map to probabilities near 0.5.
+- Large positive scores map to values near 1. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Large negative scores map to values near 0. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- A score near 0 maps to a probability near 0.5. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### General Rules
-- Logistic Regression keeps a linear decision structure in feature space but uses a non-linear transformation on the output score.
-- The sigmoid makes predictions interpretable as probabilities for binary outcomes.
-- Logistic Regression is used for classification even though its name contains “regression.”
+### Key insight
+- Logistic Regression is still linear in the feature score, but non-linear in the output mapping. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- That is why it remains a linear classifier even though the final output is passed through a sigmoid. [web.stanford](https://web.stanford.edu/~jurafsky/slp3/4.pdf)
+
+***
 
 ## Logistic Regression for Classification
 
-### Target and Prediction
-- In binary Logistic Regression:
-  - The actual target satisfies $(y_i \in \{0,1\})$
-  - The predicted output satisfies $\hat{y}_i \in [0,1]$
+### Target and output
+- In binary Logistic Regression, the observed target is \(y_i \in \{0,1\}\). [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- The model output is a probability-like value in \([0,1]\) for the positive class. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
 
-### Logistic Loss Function (Log Loss)
-- **Loss for the $i^{th}$ instance:**
-
-$$
+### Log loss
+\[
 l(y_i,\hat{y}_i)=-(y_i\log \hat{y}_i + (1-y_i)\log(1-\hat{y}_i))
-$$
+\]
 
 ### Interpretation
-- The loss is small when the predicted probability matches the true class well.
-- The loss becomes very large when the model is highly confident but wrong.
-- This encourages the model to assign high probability to the correct class and low probability to the incorrect class.
+- The loss is small when the model assigns high probability to the correct class. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- The loss becomes large when the model is highly confident and wrong. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- This makes log loss more appropriate than square loss for binary probability estimation. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
 
-### Decision Rule
-- A predicted probability can be converted to a class label using a threshold, often 0.5.
-- Changing the threshold changes the tradeoff between precision and recall.
+### Decision threshold
+- To convert predicted probabilities into class labels, a threshold is used, often 0.5. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- If \(\hat{y}_i \ge 0.5\), predict the positive class; otherwise predict the negative class. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Changing the threshold changes precision and recall tradeoffs without changing the fitted model weights. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### General Rules
-- Logistic Regression models the probability of the positive class.
-- The output must be interpreted together with a threshold if a hard class label is needed.
-- Log loss is more appropriate than square loss for binary probability estimation.
-- Logistic Regression is widely used in text classification because it works well with sparse, high-dimensional features.
+### Practical rule
+- Logistic Regression is widely used for text classification because it performs well with sparse, high-dimensional feature vectors. [geeksforgeeks](https://www.geeksforgeeks.org/machine-learning/text-classification-using-logistic-regression/)
+
+***
 
 ## Using Logistic Regression for Bounded Regression
 
-### Idea
-- Logistic Regression naturally produces outputs in $[0,1]$.
-- For bounded regression tasks, a target variable can sometimes be scaled into this interval before fitting.
+### Core idea
+- Because logistic outputs lie in \([0,1]\), the model can sometimes be used for targets that are naturally bounded in that interval. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- A target variable can also be rescaled into \([0,1]\) using min-max normalization and then mapped back later. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
 
-### Min-Max Normalization
-- A common transformation is:
-
-$$
-\frac{x - min}{max - min} \rightarrow [0,1]
-$$
-
-### Procedure
-- Normalize the target into $[0,1]$.
-- Train the model to predict within that range.
-- Transform predictions back to the original scale after inference.
+### Min-max normalization
+\[
+\frac{x-\min}{\max-\min}
+\]
 
 ### Interpretation
-- This can be useful when the target is truly bounded and predictions should remain in that range.
-- It is not a general replacement for standard regression methods.
+- This approach is only sensible when the target truly has meaningful lower and upper bounds. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- It is not a general replacement for standard regression methods. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
 
-### General Rules
-- Logistic-style bounded prediction is only appropriate when the target variable has a meaningful lower and upper bound.
-- If the original task is standard unbounded regression, OLS or other regression models are usually more natural.
-- Any target transformation used in training must be reversed consistently during evaluation and deployment.
+### Caution
+- If the original problem is an ordinary continuous regression problem, OLS or another regression model is usually more natural. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Any transformation applied during training must be reversed correctly during evaluation and deployment. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+
+***
 
 ## Logistic Regression for Sentiment Analysis
 
-### Workflow
-1. **Dataset Split:** Split the dataset $(X, y)$ into training and testing portions.
-2. **Feature Construction:** Convert text documents into bag-of-words or related vectors.
-3. **Model Training:** Fit Logistic Regression on the training data.
-4. **Evaluation:** Measure performance on held-out data.
-5. **Efficiency:** Use sparse matrices to store and process the high-dimensional text features efficiently.
+### Standard workflow
+1. Split the labeled dataset into training and evaluation subsets. [drlee](https://drlee.io/text-preprocessing-and-classification-with-logistic-regression-ea4fe3cfcaac)
+2. Convert documents into bag-of-words or tf-idf vectors. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+3. Fit a Logistic Regression model on the training features. [geeksforgeeks](https://www.geeksforgeeks.org/machine-learning/text-classification-using-logistic-regression/)
+4. Predict on held-out data. [drlee](https://drlee.io/text-preprocessing-and-classification-with-logistic-regression-ea4fe3cfcaac)
+5. Evaluate using metrics such as accuracy, precision, recall, and F1. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Why It Works Well
-- Sentiment classification is often linearly separable enough in bag-of-words space for Logistic Regression to perform well.
-- Text data usually has many dimensions but most are zero for any given document, which suits sparse linear methods.
+### Why it works well
+- Sentiment analysis often has enough lexical signal for a linear boundary in bag-of-words space to work surprisingly well. [geeksforgeeks](https://www.geeksforgeeks.org/machine-learning/text-classification-using-logistic-regression/)
+- Sparse linear models scale well to large vocabularies and many documents. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
 
-### General Rules
-- Feature extraction must be learned on training data only to avoid leakage.
-- Sparse representations are essential for scaling text classification to large vocabularies.
-- Logistic Regression is a strong baseline for sentiment analysis because it is simple, fast, and effective on sparse text features.
+### Important implementation rule
+- Feature extraction must be fit on training data only to avoid leakage. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The model should be evaluated on held-out data rather than the same data used for fitting. [drlee](https://drlee.io/text-preprocessing-and-classification-with-logistic-regression-ea4fe3cfcaac)
+
+### Strong baseline point
+- Logistic Regression is often treated as a strong baseline for text classification because it is simple, fast, interpretable, and effective with sparse features. [geeksforgeeks](https://www.geeksforgeeks.org/machine-learning/text-classification-using-logistic-regression/)
+
+***
+
+## Likely Test Targets
+
+### High priority
+- Know the general linear prediction formula and what each term means. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Distinguish **OLS** from **Logistic Regression** by target type, output type, and loss function. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Know why OLS is not ideal for binary class probabilities. [kb.osu](https://kb.osu.edu/bitstreams/5c7cd0a0-48b1-5fa3-9e62-b0c9b658105a/download)
+- Know what the sigmoid function does. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Know what log loss penalizes and why it fits classification better than square loss. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Know that Logistic Regression is commonly used for sparse text classification. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
+
+### Medium priority
+- Understand the role of the intercept or bias. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Understand that changing the threshold changes predicted labels and evaluation metrics, but not the fitted model itself. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Understand why sparse text inputs make linear methods computationally attractive. [web.stanford](https://web.stanford.edu/~jurafsky/slp3/4.pdf)
+
+### Likely quiz traps
+- Thinking Logistic Regression is a regression model just because of its name. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Forgetting that OLS outputs are unbounded. [kb.osu](https://kb.osu.edu/bitstreams/5c7cd0a0-48b1-5fa3-9e62-b0c9b658105a/download)
+- Confusing the linear score with the sigmoid-transformed probability. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Assuming thresholding is part of training rather than part of converting probabilities to labels. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+***
 
 ## General Rules
 
-### Linear Models
-- Linear models combine input features additively through learned weights.
-- They are easy to interpret because each feature has a direct contribution to the final score.
-- They often perform well when informative signals are spread across many sparse dimensions.
+### Linear models
+- Linear models combine features additively through learned weights. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- They are interpretable because each feature has a direct directional contribution to the score. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### Regression vs. Classification
-- Use regression models when the target is continuous.
-- Use classification models when the target is categorical.
-- The same linear score can be used in different ways depending on the output transformation and loss function.
+### Regression vs classification
+- Use regression models when the target is continuous. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Use classification models when the target is categorical. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- The same feature space can support either task, but the output interpretation and loss must match the problem. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
 
-### Loss Functions
-- The loss function defines what the model is trying to optimize.
-- OLS uses square loss to penalize numeric prediction error.
-- Logistic Regression uses log loss to penalize poor probability estimates for class labels.
-- The choice of loss function should match the type of target and prediction task.
+### Loss functions
+- The loss function defines what the model is optimized to do. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- OLS minimizes square loss. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- Logistic Regression minimizes log loss for binary targets. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### Probability and Thresholds
-- Logistic Regression outputs probabilities or probability-like scores.
-- A classification threshold converts these probabilities into hard labels.
-- Different thresholds can change precision, recall, and F1 without changing the underlying model.
+### Probabilities and thresholds
+- Logistic Regression outputs probabilities or probability-like scores for the positive class. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+- A threshold converts those probabilities into hard labels. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Different thresholds produce different precision-recall tradeoffs. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### Sparse Text Features
-- Text feature spaces are usually high-dimensional and sparse.
-- Linear models are computationally attractive in this setting because they scale well with sparse input data.
-- Sparse storage is essential for efficient memory use and training speed.
+### Sparse text features
+- Text feature spaces are usually high-dimensional and sparse. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
+- Linear models are attractive in this setting because they train and predict efficiently on sparse input. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
 
-### Practical Modeling
-- Always separate training and test data before fitting the model.
-- Any preprocessing or feature learning that depends on the corpus should be fit on training data only.
-- Evaluation should be done on held-out data to estimate generalization rather than memorization.
+### Practical modeling
+- Split train and test data before fitting vectorizers or models. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Learn feature extraction parameters on training data only. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Evaluate on held-out data to estimate generalization rather than memorization. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
 ### Limitations
-- Linear models assume additive feature effects and cannot naturally model complex feature interactions unless such interactions are encoded explicitly.
-- They may miss subtle linguistic phenomena such as long-distance dependencies, compositional meaning, and nuanced word order effects.
+- Linear models assume additive feature effects unless interactions are explicitly encoded. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- They may miss subtle linguistic structure, compositional meaning, and long-range dependencies. [web.stanford](https://web.stanford.edu/~jurafsky/slp3/4.pdf)
+
+***
 
 ## Glossary
 
 ### **Bias / Intercept**
-- A constant term added to the weighted sum of features that shifts predictions even when all feature values are zero.
-
-### **Linear Classifier**
-- A model that predicts class-related scores from a weighted linear combination of input features, often followed by a threshold or probability transformation.
+- A constant added to the weighted sum of features that shifts the prediction baseline. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
 ### **Linear Prediction**
-- The weighted sum of input features and model coefficients, optionally plus a bias term.
+- The weighted sum of input features and learned coefficients, optionally plus a bias term. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### **Logistic Loss Function**
-- Also known as log loss or cross-entropy loss, it penalizes wrong probability predictions and especially punishes predictions that are confident but incorrect.
-
-### **Logistic Regression**
-- A linear classification model that applies the sigmoid function to a linear score in order to predict probabilities for binary outcomes.
-
-### **Min-Max Normalization**
-- A rescaling technique used to transform values into a bounded interval, often $[0,1]$.
+### **Linear Classifier**
+- A classifier based on a linear score in feature space, often combined with a threshold or probability transformation. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
 ### **Ordinary Least Squares (OLS)**
-- A linear regression method that learns parameters by minimizing the sum of squared prediction errors.
+- A linear regression method that minimizes the sum of squared errors. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+
+### **Square Loss**
+- A loss based on the squared difference between actual and predicted numeric values. [coursera](https://www.coursera.org/articles/linear-regression-vs-logistic-regression)
+
+### **Logistic Regression**
+- A linear model for classification that applies a sigmoid transformation to a linear score to estimate probabilities for binary outcomes. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
 ### **Sigmoid Function**
-- An S-shaped function that maps any real-valued input into the interval $(0,1)$.
+- A function that maps any real-valued score into the interval \((0,1)\). [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### **Sparse Matrix**
-- A matrix representation that stores mainly non-zero entries, which is crucial for efficient text modeling.
-
-### **Square Loss Function**
-- A loss function based on the squared difference between actual and predicted numeric values.
+### **Log Loss**
+- A classification loss that strongly penalizes confident wrong probability predictions. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
 ### **Threshold**
-- A cutoff used to convert predicted probabilities into discrete class labels.
+- A cutoff used to convert predicted probabilities into discrete class labels. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+### **Sparse Matrix**
+- A matrix storing mostly non-zero entries efficiently, which is essential for large text feature spaces. [web.stanford](https://web.stanford.edu/~jurafsky/slp3/4.pdf)
+
+***
+
+## What I improved
+
+The biggest upgrades from your draft are:
+- making the **OLS vs Logistic Regression** contrast much sharper and more testable. [kb.osu](https://kb.osu.edu/bitstreams/5c7cd0a0-48b1-5fa3-9e62-b0c9b658105a/download)
+- explicitly separating **linear score**, **sigmoid probability**, and **thresholded class label**, which is a common confusion point. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- emphasizing why Logistic Regression is a strong fit for **bag-of-words and tf-idf text classification**. [geeksforgeeks](https://www.geeksforgeeks.org/machine-learning/text-classification-using-logistic-regression/)
+
+If you want, the next best step is for me to produce a **combined Week 2 study guide** from these three rewritten sections, with:
+- **Executive Summary**
+- **Core Concepts**
+- **Likely Test Targets**
+- **High/Medium/Low priority tags**
+- and a **professor-profile calibration note** based on Quiz 1. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
 
 ---
 
-# Code Material: Zipf's Law TF-IDF Logistic Regression
+Here’s a stronger, cleaner rewrite of **Code Material: Zipf’s Law TF-IDF Logistic Regression**. The main fixes are: it now reads more like a **study guide tied to implementation behavior**, it flags a few **important code-level concepts the quiz could target**, and it better separates **corpus statistics**, **feature construction**, **model fitting**, and **evaluation**. I also sharpened places where your original draft was conceptually right but too broad, especially around **DF vs TF**, **training-only fitting**, **sparse matrices**, and the distinction between `predict` and `predict_proba`. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
-* **Summary:**
-  This code material walks through an end-to-end text classification pipeline using the IMDB movie review dataset. It covers preprocessing, Zipf’s Law, vocabulary construction, TF-IDF feature extraction, sparse matrix representations, Logistic Regression training, cross-validation, and evaluation metrics, while also highlighting the general rules behind each step.
+## Code Material: Zipf’s Law TF-IDF Logistic Regression
+
+* **Summary:** This notebook walks through a full classical NLP pipeline for sentiment classification using the IMDB review dataset: preprocess text, inspect corpus frequency structure through Zipf’s law, build a vocabulary, convert documents into TF-IDF vectors, train Logistic Regression, and evaluate on held-out data. The core lesson is that **feature construction and data-splitting choices are as important as the classifier itself**. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+
+* **Why this notebook matters:** The lecture materials explain bag-of-words, TF-IDF, and linear classifiers conceptually, while this notebook shows how those ideas are implemented step by step. That makes it especially important for quiz preparation, because this instructor may ask about **what each code block is doing, why it is written that way, and what could go wrong if the steps are done in the wrong order**. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+
+* **Likely testing style:** Expect code-adjacent questions about **document frequency vs term frequency**, **why `set(tokens)` is used for DF**, **why sparse matrices are necessary**, **what `fit` learns versus what `transform` applies**, **what cross-validation is doing**, and **how `predict` differs from `predict_proba`**. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Overview
 
-### 1. The Text Preprocessing Pipeline
-- Raw text must be converted into standardized tokens before it can be used by machine learning models.
-- Typical preprocessing steps include:
-  - **Tokenization:** Splitting text into smaller units such as words, punctuation marks, or other tokens.
-  - **Lowercasing:** Standardizing case so equivalent forms like `Movie` and `movie` are treated the same.
-  - **Stopword Removal:** Filtering out very common words that often contribute little discriminative information.
-  - **Stemming or Lemmatization:** Reducing inflected or variant forms toward a more normalized base form.
+### Pipeline overview
+- The notebook demonstrates a full text classification workflow:
+  1. Load labeled data.
+  2. Preprocess text.
+  3. Analyze corpus frequency behavior.
+  4. Build vocabulary and IDF statistics.
+  5. Convert documents into TF-IDF features.
+  6. Split data.
+  7. Train Logistic Regression.
+  8. Evaluate on held-out data.
+  9. Run inference on new text. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
 
-#### General Rules
-- Preprocessing choices directly affect the vocabulary and therefore the final feature representation.
-- Different preprocessing pipelines can produce different model performance even when the classifier is unchanged.
-- There is no universally best preprocessing recipe; the right choice depends on the task, corpus, and desired level of normalization.
-- Stopword removal is task-dependent: words that are unhelpful for topic classification may still carry signal in sentiment or style tasks.
-- Stemming is usually more aggressive and rule-based, while lemmatization is usually more linguistically grounded.
+### Main theme
+- The pipeline is not just “put text into a classifier.” [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Every earlier choice, including preprocessing, vocabulary pruning, and weighting, changes what information the model can learn from. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
-### 2. Zipf's Law and the Long Tail
-- Natural language follows a highly skewed frequency distribution.
-- A small number of words occur very frequently, while a very large number of words occur rarely.
-- This is commonly summarized by **Zipf’s Law**, where word frequency is approximately inversely related to rank.
+***
 
-#### Coding Interpretation
-- Sorting words by frequency reveals a few dominant terms and a large long tail of rare terms.
-- A log-log plot of frequency versus rank often appears approximately linear, reflecting power-law-like behavior.
+## The Text Preprocessing Pipeline
 
-#### General Rules
-- Extremely frequent words are often less discriminative because they appear in many documents.
-- Extremely rare words may add noise, sparsity, misspellings, or corpus-specific artifacts.
-- Vocabulary pruning is often necessary to balance information retention against computational cost.
-- Replacing rare terms with a special token such as `<UNK>` is one practical way to control vocabulary size.
+### Core idea
+- Raw text must be transformed into standardized tokens before machine learning models can use it effectively. [ixopay](https://www.ixopay.com/blog/what-is-nlp-natural-language-processing-tokenization)
+- Common preprocessing operations include tokenization, lowercasing, stopword handling, and stemming or lemmatization. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### 3. Feature Extraction: Bag-of-Words and TF-IDF
-- Machine learning models require numeric input, so text documents must be mapped to vectors.
-- A document-term representation assigns one feature dimension per vocabulary term.
-- Common weighting schemes include:
-  - **Binary:** Whether a term appears.
-  - **Term Frequency (TF):** How many times a term appears in the document.
-  - **TF-IDF:** A weighted version that upweights terms frequent in one document but infrequent in the corpus.
+### Why preprocessing matters
+- Preprocessing changes the vocabulary, and vocabulary changes the feature matrix. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- That means preprocessing is not just cleaning; it is part of model design. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
-#### General Rules
-- Feature extraction is part of the model design, not just a formatting step.
-- The same text can produce very different vectors depending on tokenization, normalization, vocabulary filtering, and weighting.
-- TF emphasizes repeated terms inside a document.
-- IDF reduces the influence of terms that appear in many documents.
-- TF-IDF is often a strong baseline for text classification because it balances document-specific frequency with corpus-wide rarity.
+### Important rules
+- The order of operations matters: tokenization must happen before token-level filtering or stemming. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Lowercasing before stopword filtering improves consistency because membership checks are case-sensitive. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- The same preprocessing pipeline must be used at both training time and inference time. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### 4. Sparse Matrices
-- Text feature spaces are typically high-dimensional because the vocabulary can contain thousands or tens of thousands of terms.
-- However, each individual document usually contains only a small subset of the vocabulary.
-- As a result, document-term matrices are mostly zeros.
+### Likely testable point
+- Stopword removal is task-dependent rather than universally correct. In sentiment tasks, some common-looking words may still carry useful signal. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
-#### General Rules
-- Sparse matrix formats store only non-zero entries and their locations.
-- Sparse storage is essential for efficient memory usage and fast computation in bag-of-words and TF-IDF pipelines.
-- Many linear models used in NLP are designed to work efficiently with sparse feature matrices.
+***
 
-### 5. Logistic Regression for Text Classification
-- Logistic Regression is a linear classifier that maps a weighted feature vector to a probability through the sigmoid function.
-- It is commonly used for binary sentiment analysis because it works well with sparse, high-dimensional features.
+## Zipf’s Law and the Long Tail
 
-#### General Rules
-- Logistic Regression learns a weight for each feature and an intercept term.
-- Positive weights push predictions toward the positive class; negative weights push predictions toward the negative class.
-- Logistic Regression predicts probabilities, which can be converted to labels using a decision threshold.
-- It is often a strong baseline for text classification because it is simple, interpretable, and effective.
+### Core idea
+- Natural language has a highly skewed frequency distribution: a few words are extremely common, while many words are rare. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- This is commonly described by **Zipf’s law**, where frequency decreases roughly as rank increases. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
-### 6. Model Evaluation
-- A classifier should be evaluated on held-out data rather than only on the training set.
-- Common evaluation metrics include:
-  - **Accuracy**
-  - **Precision**
-  - **Recall**
-  - **F1 Score**
-  - **Confusion Matrix**
+### Coding interpretation
+- If you count corpus-wide token frequencies and sort terms by frequency, you should see a short high-frequency head and a long low-frequency tail. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- A log-log plot is useful because the values span multiple orders of magnitude. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
-#### General Rules
-- Accuracy is intuitive but can be misleading when classes are imbalanced.
-- Precision matters more when false positives are costly.
-- Recall matters more when false negatives are costly.
-- F1 is useful when precision and recall must both be considered.
-- The confusion matrix provides the raw counts behind these metrics.
+### Why this matters for modeling
+- Very frequent words are often weak discriminators. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- Very rare words may be noisy, corpus-specific, or too sparse to help much. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- This is why vocabulary pruning and weighting schemes are so important. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Likely testable point
+- Zipf analysis produces **corpus statistics**, not document features. That distinction matters. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+
+***
+
+## Feature Extraction: Bag-of-Words and TF-IDF
+
+### Core idea
+- Classifiers need numeric vectors, so each document must be mapped into a feature space defined by a vocabulary. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Common weighting schemes include binary features, term frequency, and TF-IDF. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Important distinction
+- **TF** measures how often a term appears in one document. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- **DF** measures how many documents contain the term. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- **IDF** downweights terms with high document frequency. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Why TF-IDF is useful
+- TF highlights terms that matter within a document. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- IDF reduces the influence of terms that appear in many documents across the corpus. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- TF-IDF combines both ideas and is often a strong baseline for text classification. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+
+### Likely testable point
+- Feature extraction is a modeling step, not just a formatting step. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+
+***
+
+## Sparse Matrices
+
+### Why sparsity appears
+- Text vocabularies can contain thousands or tens of thousands of terms, but any one document contains only a small fraction of them. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- That means most entries in the document-term matrix are zero. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Why sparse storage matters
+- Sparse formats store mainly non-zero values and their positions instead of every zero explicitly. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- This saves large amounts of memory and speeds up training for text models. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
+
+### Practical rule
+- Sparse matrices are the standard representation for bag-of-words and TF-IDF pipelines. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
+- Many scikit-learn text tools already return sparse matrices by default. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
+
+## Logistic Regression for Text Classification
+
+### Core idea
+- Logistic Regression is a linear classifier that converts a weighted feature sum into a probability-like output. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- It is widely used for binary text classification because it works well with sparse, high-dimensional features. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+### Interpretation of weights
+- Positive weights push predictions toward the positive class. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Negative weights push predictions toward the negative class. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- The intercept shifts the baseline prediction. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+### Why it fits this notebook
+- IMDB sentiment analysis is a standard binary classification problem with sparse text inputs, which makes TF-IDF plus Logistic Regression a strong classical baseline. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+
+### Likely testable point
+- Logistic Regression predicts probabilities first; class labels come from thresholding those probabilities. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+***
+
+## Model Evaluation
+
+### Core principle
+- A classifier should be evaluated on held-out data rather than only on the data used for fitting. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Evaluation metrics include accuracy, precision, recall, F1, and the confusion matrix. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Why multiple metrics matter
+- Accuracy is simple but can hide important errors. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Precision focuses on false positives. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Recall focuses on false negatives. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- F1 balances precision and recall. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Likely testable point
+- The confusion matrix provides the raw counts underlying these metrics, so understanding it helps derive precision, recall, and F1. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Python Libraries
 
 ### pandas
-- Used for loading and manipulating tabular datasets such as CSV files.
-- A `DataFrame` stores rows and columns and is convenient for handling labeled data.
-- Common uses here include reading the IMDB data and accessing review text and sentiment labels.
+- Used to load and manipulate tabular datasets such as `movie_data.csv`. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+- A DataFrame stores the review text and sentiment labels in a structured form. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
 
 ### nltk
-- Used for tokenization, stopword lists, and stemming.
-- Provides reusable components for building text preprocessing pipelines.
+- Used for tokenization, stopword handling, and stemming in the custom preprocessing pipeline. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
 ### collections.defaultdict
-- Useful for counting frequencies without manually checking whether a key already exists.
+- Useful for counting terms and document frequencies without manually checking whether keys already exist. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
 ### re
-- Used for regular expression-based text cleaning, such as removing non-alphanumeric characters.
+- Used for regex-based cleaning, such as replacing punctuation with spaces before whitespace tokenization. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
 ### matplotlib
-- Used for visualizing distributions, such as Zipf plots and histograms of document lengths.
+- Used for Zipf plots and other exploratory visualizations. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
 ### numpy
-- Used for numerical summaries and array operations.
+- Used for numerical operations and summaries in machine learning workflows. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
 ### tqdm
-- Used to monitor progress in long-running loops.
+- Used for progress bars in loops over many documents. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
 
 ### math
-- Used for functions such as logarithms in TF-IDF computation.
+- Used for logarithms in manual TF and IDF calculations. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
 ### sklearn
-- Used for model training, feature extraction, splitting data, cross-validation, and evaluation.
+- Used for splitting data, vectorization, model fitting, cross-validation, and evaluation. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
 ### scipy
-- Used for sparse matrix data structures such as CSR matrices.
+- Used for sparse matrix structures such as CSR matrices. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
 ### pickle
-- Commonly used to save trained models or preprocessing objects for later reuse.
+- Often used to save learned preprocessing objects or trained models for reuse. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+
+***
 
 ## Sentiment Analysis on the IMDB Dataset
 
-### Dataset Loading
+### Dataset loading
 ```python
 import pandas as pd
 
 df = pd.read_csv('movie_data.csv')
-
 print(len(df))
 ```
 
@@ -1071,16 +1247,18 @@ print(len(df))
 ```
 
 ### Interpretation
-- The dataset contains 50,000 movie reviews with associated sentiment labels.
-- Each row consists of raw review text and a binary sentiment target.
+- The notebook uses a dataset of 50,000 movie reviews with sentiment labels. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+- This is a supervised text classification setup: raw text is the input and sentiment is the target label. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
 
-#### General Rules
-- Text classification datasets typically contain raw text plus labels.
-- Before training a model, the text must be transformed into features while labels remain in their original supervised form.
+### General rules
+- Text datasets typically contain raw text plus labels, but the labels are not vectorized the way the text is. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The text must be transformed into features before fitting a classifier. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## NLTK-Based Preprocessing
 
-### Stopwords and Tokenization
+### Stopwords and tokenization
 ```python
 import nltk
 nltk.download('punkt')
@@ -1090,19 +1268,18 @@ from nltk.corpus import stopwords
 stop = set(stopwords.words('english'))
 ```
 
-### Case Sensitivity Example
+### Case sensitivity example
 ```python
 print('An' in stop)
 print('an' in stop)
 print("'s" in stop)
 ```
 
-#### General Rules
-- Python string membership is case-sensitive.
-- If stopword matching is done after lowercasing, `An` and `an` can be treated consistently.
-- Whether punctuation-like fragments such as `"'s"` are removed depends on the tokenizer and stopword list, not just on the word itself.
+### Why this matters
+- Membership tests in Python are case-sensitive, so lowercasing affects stopword filtering behavior. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Whether token fragments like `"'s"` are removed depends on the tokenizer output and the stopword list itself. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Preprocessing Function
+### Preprocessing function
 ```python
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.stem import PorterStemmer
@@ -1123,16 +1300,19 @@ def pre_processing_by_nltk(doc, stemming=True, need_sent=False):
     return [w.lower() for w in tokens if w.lower() not in stop]
 ```
 
-#### General Rules
-- A preprocessing pipeline usually combines multiple operations in a fixed order.
-- The order matters: tokenization must happen before token-level filtering or stemming.
-- Lowercasing before stopword filtering improves consistency.
-- Stemming reduces feature sparsity by merging related surface forms, but may reduce interpretability.
-- A preprocessing function should be applied consistently to both training and inference text.
+### General rules
+- This pipeline performs sentence splitting, word tokenization, optional stemming, lowercasing, and stopword removal in sequence. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- The order matters because filtering and normalization operate on the produced tokens. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Consistency matters: the same function should be used whenever the model expects the same feature space. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-## Testing Zipf's Law
+### Likely testable point
+- A preprocessing function changes both vocabulary size and feature meaning, so changing it changes the model even if the classifier is unchanged. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
-### Counting Frequencies
+***
+
+## Testing Zipf’s Law
+
+### Counting frequencies
 ```python
 from collections import defaultdict
 freq = defaultdict(int)
@@ -1147,23 +1327,20 @@ for token in raw_tokens:
 ```
 
 ### Interpretation
-- The code constructs a corpus-wide frequency dictionary.
-- Regex-based cleaning removes non-alphanumeric punctuation before splitting on whitespace.
+- This code builds a corpus-level token frequency dictionary after regex cleaning and lowercasing. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- Because it uses whitespace splitting after punctuation removal, the resulting counts depend on this specific tokenization strategy. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
-#### General Rules
-- Corpus statistics depend strongly on preprocessing choices.
-- Different tokenization or cleaning rules lead to different frequency counts and different Zipf plots.
-- Frequency counts are corpus-level summaries, not document-level features.
+### General rules
+- Corpus statistics depend on preprocessing choices. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
+- Different cleaning rules produce different token counts and different Zipf plots. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
-### Frequency Ranking
+### Frequency ranking
 ```python
-order_tokens = sorted(list(freq.items()), key=lambda x: -x)[1]
+order_tokens = sorted(list(freq.items()), key=lambda x: -x [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3))
 ```
 
-#### General Rules
-- Sorting by descending frequency reveals the head and tail of the distribution.
-- The most frequent words are usually function words or highly common content words.
-- The long tail often consists of rare names, misspellings, domain-specific words, and one-off tokens.
+### Important note
+- To rank by descending frequency, the sort key should use the frequency value, not the full tuple. This corrected form better matches the intended interpretation of the notebook section. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
 ### Visualization
 ```python
@@ -1173,14 +1350,15 @@ y = [freq for token, freq in order_tokens]
 plt.loglog(y)
 ```
 
-#### General Rules
-- A log-log visualization is useful when frequency values span multiple orders of magnitude.
-- Raw linear-scale plots can obscure the tail because high-frequency words dominate the vertical scale.
-- Histograms of review lengths are useful for understanding variability in document size, which can influence TF weighting and normalization.
+### General rules
+- A log-log plot is appropriate when frequencies span several orders of magnitude. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- Linear-scale plots often hide the tail because a few common terms dominate the range. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+
+***
 
 ## Building TF-IDF Ourselves
 
-### Document Frequency
+### Document frequency
 ```python
 from tqdm import tqdm
 DF = defaultdict(float)
@@ -1190,12 +1368,12 @@ for doc in tqdm(df.review):
         DF[token] += 1
 ```
 
-#### General Rules
-- **Document Frequency (DF)** counts how many documents contain a term, not how many total times the term appears in the corpus.
-- Using `set(tokens)` is important because a document should contribute at most one count to DF for each term.
-- DF is corpus-dependent and must be recomputed if the corpus changes.
+### Why `set(tokens)` matters
+- **Document frequency** counts whether a term appears in a document, not how many times it appears in that document. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- Using `set(tokens)` ensures each document contributes at most one count per term. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- Without the set conversion, the code would accidentally count term frequency instead of document frequency. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
-### Vocabulary and IDF Construction
+### Vocabulary and IDF construction
 ```python
 from math import log
 IDF, vocab = dict(), dict()
@@ -1207,24 +1385,25 @@ for token in DF:
         IDF[token] = log(1 + len(df.review) / DF[token])
 ```
 
-#### General Rules
-- Frequency thresholds are a practical way to prune rare terms from the vocabulary.
-- Vocabulary pruning trades off coverage against sparsity, noise, and computational cost.
-- IDF is higher for terms appearing in fewer documents and lower for terms appearing in many documents.
-- The exact IDF formula may vary across implementations, but the core idea is always to downweight common terms.
+### Interpretation
+- This code prunes rare terms by requiring a minimum document frequency threshold. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- It then assigns each retained term a vocabulary index and an IDF value. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
-### Handling Unknown Words
+### General rules
+- Frequency thresholds control vocabulary size and reduce extreme sparsity. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- The exact IDF formula may vary, but the purpose remains the same: downweight terms that appear in many documents. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+
+### Handling unknown words
 ```python
 IDF['<UNK>'] = 1
 vocab['<UNK>'] = len(vocab)
 ```
 
-#### General Rules
-- Unknown-token handling provides a fallback for terms not seen in the retained vocabulary.
-- Mapping rare or unseen terms to `<UNK>` can improve robustness and control vocabulary growth.
-- The choice of `<UNK>` weighting is a modeling decision and may influence downstream results.
+### General rules
+- An unknown token provides a fallback for terms outside the retained vocabulary. [ixopay](https://www.ixopay.com/blog/what-is-nlp-natural-language-processing-tokenization)
+- This is one way to limit vocabulary growth and make feature extraction more robust to rare or unseen words. [ixopay](https://www.ixopay.com/blog/what-is-nlp-natural-language-processing-tokenization)
 
-### TF-IDF Feature Function
+### TF-IDF feature function
 ```python
 def tfidf_feature_extractor(doc, vocab, IDF):
     tokens = pre_processing_by_nltk(doc)
@@ -1234,7 +1413,7 @@ def tfidf_feature_extractor(doc, vocab, IDF):
     TF = defaultdict(int)
     for token in tokens:
         TF[token] += 1
-    x =  * len(vocab)
+    x = [0] * len(vocab)
     for token in set(tokens):
         tfidf = log(TF[token] + 1) * IDF[token]
         token_id = vocab[token]
@@ -1242,11 +1421,15 @@ def tfidf_feature_extractor(doc, vocab, IDF):
     return x
 ```
 
-#### General Rules
-- TF-IDF combines document-level term frequency with corpus-level document rarity.
-- Log-scaled TF reduces the influence of repeated occurrences.
-- A dense Python list is conceptually simple but inefficient for high-dimensional sparse text features.
-- Manual TF-IDF implementations are useful for learning the logic, but production pipelines typically use library implementations for efficiency and consistency.
+### Why this is useful
+- This hand-built version makes the logic of TF-IDF explicit: count term frequency, map unknowns, apply log-scaled TF, multiply by IDF, and place the result into the feature vector. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- It is educational because it exposes exactly what library tools automate. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Important limitation
+- A dense Python list is conceptually simple but inefficient for large sparse vocabularies. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Library vectorizers are usually preferred in practice for efficiency and consistency. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+
+***
 
 ## Train/Test Splitting
 
@@ -1258,15 +1441,20 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 ```
 
-#### General Rules
-- Train/test splitting is used to estimate generalization to unseen data.
-- The test set should remain unseen during model training and model selection.
-- Shuffling helps reduce ordering bias when the dataset has no meaningful sequence structure.
-- Any vocabulary learning or IDF estimation should ideally be performed on training data only to avoid leakage.
+### General rules
+- Train/test splitting estimates generalization to unseen data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The test set should remain untouched during model fitting and model selection. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Shuffling is helpful when the dataset does not have meaningful order that should be preserved. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Critical rule
+- Vocabulary learning and IDF estimation should ideally be done on training data only. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- Fitting these on the full dataset before splitting would cause leakage. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Logistic Regression Training
 
-### Small Training Subsets
+### Small training subsets
 ```python
 from sklearn.linear_model import LogisticRegression
 
@@ -1274,36 +1462,39 @@ clf = LogisticRegression(random_state=0).fit(X_train[:1000], y_train[:1000])
 clf.score(X_test, y_test)
 ```
 
-#### General Rules
-- Increasing the amount of training data often improves model performance, though gains may diminish.
-- Small subsets are useful for debugging, but full training usually produces stronger generalization if computation allows.
+### General rules
+- Small subsets are useful for debugging and quick experiments. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+- More training data often improves performance, although gains may taper off. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
 
-### Convergence Warnings
+### Convergence warnings
 ```python
 clf = LogisticRegression(random_state=0).fit(X_train[:10000], y_train[:10000])
 ```
 
-#### General Rules
-- A convergence warning means the optimizer hit its iteration limit before fully converging.
-- This does not always make the model unusable, but it suggests that optimization settings may need adjustment.
-- Common responses include increasing `max_iter`, changing the solver, or improving feature scaling when appropriate.
+### General rules
+- A convergence warning means optimization stopped before full convergence. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- This suggests that training settings may need adjustment, such as increasing `max_iter`. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- It does not automatically mean the model is useless, but it should not be ignored. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+***
 
 ## Sparse Matrix Training
 
-### CSR Conversion
+### CSR conversion
 ```python
 import scipy.sparse as sparse
 sparse_X = sparse.csr_matrix(X_train)
 ```
 
-### Why It Helps
-- CSR format stores only non-zero feature values and their positions.
-- This is especially efficient for document-term matrices in NLP.
+### Why it helps
+- CSR stores only non-zero entries and their positions. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- This is well suited to document-term matrices, where most entries are zero. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-#### General Rules
-- Sparse matrix formats are usually preferred over dense matrices for large text datasets.
-- Efficiency gains can be substantial in both memory usage and model fitting time.
-- Many scikit-learn text-processing tools already return CSR matrices by default.
+### General rules
+- Sparse matrices are usually preferable to dense matrices for large text datasets. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
+- The savings can be substantial in both memory usage and training speed. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## CountVectorizer Example
 
@@ -1319,11 +1510,15 @@ docs = [
 bag = count.fit_transform(docs)
 ```
 
-#### General Rules
-- `CountVectorizer` converts raw documents into a sparse document-term matrix of token counts.
-- If no vocabulary is supplied, the vocabulary is learned during `fit`.
-- The learned vocabulary maps terms to integer feature indices.
-- The exact tokens included depend on preprocessing, tokenization rules, case handling, and frequency settings.
+### What this demonstrates
+- `CountVectorizer` learns a vocabulary during `fit` and converts documents into count vectors. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The output is a sparse document-term matrix. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Token inclusion depends on tokenization, case handling, and other preprocessing rules. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Likely testable point
+- `fit_transform` both learns and applies the mapping, while `transform` only applies an already learned mapping. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## TF-IDF with Library Tools
 
@@ -1333,10 +1528,10 @@ from sklearn.feature_extraction.text import TfidfTransformer
 tfidf = TfidfTransformer(use_idf=True, norm='l2', smooth_idf=True)
 ```
 
-#### General Rules
-- `TfidfTransformer` takes count features and reweights them into TF-IDF features.
-- `smooth_idf=True` prevents zero-division-style edge cases and slightly adjusts IDF estimation.
-- `norm='l2'` normalizes each document vector to unit L2 length, which reduces the effect of document length on vector magnitude.
+### General rules
+- `TfidfTransformer` takes count vectors and reweights them into TF-IDF vectors. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- `smooth_idf=True` adjusts the IDF calculation to avoid edge-case issues. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- `norm='l2'` scales each document vector to unit L2 length, which helps reduce pure document-length effects. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
 ### TfidfVectorizer
 ```python
@@ -1353,12 +1548,13 @@ tfidf = TfidfVectorizer(
 )
 ```
 
-#### General Rules
-- `TfidfVectorizer` combines tokenization, vocabulary learning, counting, and TF-IDF weighting in one object.
-- It is conceptually equivalent to `CountVectorizer` followed by `TfidfTransformer`.
-- Fitting learns vocabulary and IDF statistics from the training corpus.
-- Transforming new text applies the learned mapping without rebuilding the vocabulary.
-- Custom tokenizers allow integration of task-specific preprocessing pipelines.
+### General rules
+- `TfidfVectorizer` combines tokenization, vocabulary learning, counting, and TF-IDF weighting in one object. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- It is conceptually similar to `CountVectorizer` followed by `TfidfTransformer`. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Fitting learns the vocabulary and IDF statistics from training data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Transforming new text reuses the learned mapping without rebuilding the vocabulary. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Cross-Validated Logistic Regression
 
@@ -1375,11 +1571,15 @@ clf = LogisticRegressionCV(
 ).fit(X_train, y_train)
 ```
 
-#### General Rules
-- `LogisticRegressionCV` performs internal cross-validation to select regularization settings automatically.
-- Cross-validation helps estimate model quality more robustly than a single split on the training data.
-- The scoring metric used in model selection affects which model configuration is chosen.
-- Internal cross-validation should still be separated from the final test evaluation.
+### What it does
+- `LogisticRegressionCV` performs internal cross-validation to choose regularization settings automatically. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Cross-validation gives a more robust estimate of training-time model quality than a single split alone. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### General rules
+- The chosen scoring metric affects which model configuration is selected. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Internal cross-validation should still remain separate from final test evaluation. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+***
 
 ## Predictions and Probabilities
 
@@ -1388,11 +1588,15 @@ yhat = clf.predict(X_test)
 clf.predict_proba(x_ins)
 ```
 
-#### General Rules
-- `predict` returns discrete class labels.
-- `predict_proba` returns estimated class probabilities.
-- Predicted probabilities support threshold-based decision making and confidence-aware analysis.
-- The probability outputs correspond to the learned classes in class order.
+### Important distinction
+- `predict` returns class labels. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- `predict_proba` returns estimated probabilities for each class. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Probability outputs are useful for thresholding, ranking, and confidence-aware decisions. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+### Likely testable point
+- Probabilities and labels are not the same object; labels are derived from probabilities using a decision rule. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+***
 
 ## Confusion Matrix and Metrics
 
@@ -1401,19 +1605,23 @@ from sklearn.metrics import confusion_matrix
 confusion_mat = confusion_matrix(y_test, yhat)
 ```
 
-### Manual Metric Calculation
+### Manual metrics
 ```python
-prec = confusion_mat / (confusion_mat + confusion_mat)[1]
-rec = confusion_mat / (confusion_mat + confusion_mat)[1]
+prec = confusion_mat / (confusion_mat + confusion_mat) [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+rec = confusion_mat / (confusion_mat + confusion_mat) [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 f1 = 2 * prec * rec / (prec + rec)
 ```
 
-#### General Rules
-- Precision measures the fraction of predicted positives that are correct.
-- Recall measures the fraction of actual positives that are recovered.
-- F1 combines precision and recall through their harmonic mean.
-- Manual calculations are useful for understanding metric definitions.
-- Library functions are preferred in practice because they are less error-prone and easier to extend.
+### Important note
+- The displayed manual metric example appears conceptually intended to illustrate deriving precision, recall, and F1 from confusion counts, but library metric functions are safer in practice because hand-written formulas are easy to get wrong. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The important learning goal is understanding what the confusion matrix counts mean and how those counts support metric computation. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### General rules
+- Precision measures the fraction of predicted positives that are correct. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Recall measures the fraction of actual positives that are recovered. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- F1 combines precision and recall into one score. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Example Inference
 
@@ -1424,72 +1632,106 @@ clf.predict(x_ins)
 clf.predict_proba(x_ins)
 ```
 
-#### General Rules
-- Inference on new text must reuse the same preprocessing and feature-extraction pipeline learned during training.
-- New text is transformed into the same feature space as the training data.
-- Words unseen during fitting are ignored or handled according to the vectorizer’s vocabulary rules.
-- A trained text classifier can output both a label and a probability for new user-provided text.
+### General rules
+- New text must be transformed with the same fitted vectorizer used during training. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- The new document must live in the same feature space as the training data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Terms unseen during fitting are ignored or handled according to the vectorizer’s vocabulary behavior. [ixopay](https://www.ixopay.com/blog/what-is-nlp-natural-language-processing-tokenization)
+
+### Practical meaning
+- A deployed text classifier is really a pipeline: preprocessing plus vectorization plus model prediction. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+
+***
 
 ## Global Rules from This Notebook
 
-### Pipeline Rules
-- A complete text classification workflow usually includes:
-  1. Load labeled text data
-  2. Preprocess text
-  3. Build vocabulary and features
-  4. Split data
-  5. Train model
-  6. Evaluate on held-out data
-  7. Apply the trained pipeline to new text
+### Pipeline rules
+- A complete text classification workflow includes loading data, preprocessing, feature construction, splitting, training, evaluation, and inference. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+- Skipping or misordering steps can change results substantially. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Representation Rules
-- Vocabulary design, frequency filtering, and weighting strongly affect model behavior.
-- TF-IDF usually improves over raw counts when common terms would otherwise dominate.
-- Sparse representations are standard for high-dimensional text data.
+### Representation rules
+- Vocabulary design, term filtering, and weighting strongly affect model behavior. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- TF-IDF often improves over raw counts when common words would otherwise dominate the feature space. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
+- Sparse representations are standard for high-dimensional text data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
-### Modeling Rules
-- Logistic Regression is a strong baseline for binary text classification.
-- More training data often helps, but optimization settings and representation choices also matter.
-- Convergence warnings indicate optimization issues, not necessarily total model failure.
+### Modeling rules
+- Logistic Regression is a strong baseline for binary text classification. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
+- More training data often helps, but optimization and representation choices matter too. [kaggle](https://www.kaggle.com/code/harshildarji/imdb-sentiment-classification-using-tf-idf)
+- Convergence warnings indicate optimization issues, not automatic model failure. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
 
-### Evaluation Rules
-- Test data should remain separate from training and tuning steps.
-- Confusion-matrix-based metrics provide more detailed information than accuracy alone.
-- Probability outputs are useful for calibration, thresholding, and downstream decision-making.
+### Evaluation rules
+- Test data must remain separate from training and tuning. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Confusion-matrix-based metrics give more detail than accuracy alone. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Probability outputs support thresholding and decision analysis. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+***
+
+## Likely Test Targets
+
+### High priority
+- Explain why `set(tokens)` is used when computing DF. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- Distinguish TF, DF, IDF, and TF-IDF. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- Explain why sparse matrices are necessary in NLP feature extraction. [scikit-learn](https://scikit-learn.org/stable/auto_examples/text/plot_document_classification_20newsgroups.html)
+- Know what `CountVectorizer`, `TfidfTransformer`, and `TfidfVectorizer` each do. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Know the difference between `predict` and `predict_proba`. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+- Know why vectorizers must be fit on training data only. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### Medium priority
+- Explain the modeling purpose of `<UNK>`. [ixopay](https://www.ixopay.com/blog/what-is-nlp-natural-language-processing-tokenization)
+- Explain why `smooth_idf=True` and L2 normalization are useful. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Explain what a convergence warning means in Logistic Regression. [scikit-learn](https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html)
+
+### Likely quiz traps
+- Confusing corpus-level frequency analysis with document-level features. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- Confusing TF with DF. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+- Treating `fit_transform` and `transform` as the same operation. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- Forgetting that evaluation on the training set does not measure generalization. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+***
 
 ## Glossary
 
 ### **CSR Matrix**
-- A compressed sparse row matrix format that stores only non-zero entries and is efficient for large sparse text data.
+- A compressed sparse row matrix format that stores mainly non-zero entries efficiently for sparse text data. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
 ### **Document Frequency (DF)**
-- The number of documents in a corpus that contain a term at least once.
-
-### **IDF**
-- A weighting factor that downweights terms appearing in many documents and upweights terms appearing in fewer documents.
-
-### **Logistic Regression**
-- A linear classification model that maps weighted feature sums into probabilities through a sigmoid-like formulation.
-
-### **Long Tail**
-- The large set of low-frequency terms that appear rarely in a corpus.
+- The number of documents that contain a term at least once. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
 
 ### **TF**
-- A term-frequency measure reflecting how often a term appears in a document.
+- A document-level quantity measuring how often a term appears within one document. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+
+### **IDF**
+- A corpus-level weighting factor that reduces the influence of terms appearing in many documents. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
 ### **TF-IDF**
-- A combined weighting scheme that highlights terms that are frequent in a document but relatively uncommon in the corpus.
+- A weighting scheme combining within-document frequency and across-corpus rarity. [developers.google](https://developers.google.com/machine-learning/guides/text-classification/step-3)
 
 ### **TfidfTransformer**
-- A tool that converts count-based document-term matrices into TF-IDF-weighted matrices.
+- A tool that converts count-based document-term features into TF-IDF-weighted features. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
 ### **TfidfVectorizer**
-- A tool that directly converts raw text documents into TF-IDF feature matrices.
+- A tool that directly converts raw text documents into TF-IDF feature matrices. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+
+### **CountVectorizer**
+- A tool that converts raw text into sparse count vectors over a learned vocabulary. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
 
 ### **Unknown Token (`<UNK>`)**
-- A fallback symbol used to represent rare or unseen terms that are not kept as separate vocabulary entries.
+- A fallback symbol used to represent terms outside the retained vocabulary. [ixopay](https://www.ixopay.com/blog/what-is-nlp-natural-language-processing-tokenization)
 
-### **Zipf's Law**
-- An empirical distributional pattern in language where a word’s frequency decreases roughly as its rank increases.
+### **Zipf’s Law**
+- The empirical pattern that word frequency decreases roughly as rank increases, creating a high-frequency head and a long tail. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/423bdeda-10f4-4901-b543-c5b4988d2271/week01_content.md)
 
----
+***
+
+## What I improved
+
+The biggest upgrades from your version are:
+- making the notebook read as a **pipeline with testable implementation logic**, not just a long walkthrough. [scikit-learn](https://scikit-learn.org/1.4/tutorial/text_analytics/working_with_text_data.html)
+- explicitly flagging **DF vs TF**, **training-only fitting**, **sparse representation**, and **predict vs predict_proba**, which are prime quiz material. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
+- tightening some code explanations so they reflect the intended conceptual lesson more clearly, especially for frequency ranking and manual metric calculation. [afit-r.github](https://afit-r.github.io/tf-idf_analysis)
+
+If you want, I can now turn all four Week 2 sections into one **final polished Week 2 study guide** with:
+- **Executive Summary**
+- **Core Concepts**
+- **Likely Test Targets**
+- **High / Medium / Low priority**
+- and a **“what changed from your original notes”** section. [ppl-ai-file-upload.s3.amazonaws](https://ppl-ai-file-upload.s3.amazonaws.com/web/direct-files/attachments/159433465/e92a01c3-bd3b-4c29-860f-29ebe6424267/quiz01.md)
