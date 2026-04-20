@@ -1,0 +1,576 @@
+--- start{lec01_types_of_language_models.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+TYPES OF LANGUAGE
+MODELS
+Outline
+COURSE INFORMATION
+
+
+
+
+  What is Natural Language Processing (NLP)?
+  N-gram Language Models:
+  • Markov models
+  • Likelihood and perplexity
+  • Smoothing
+LANGUAGE MODELS
+
+
+
+
+    What are language models and what are they used for?
+
+
+ Text data
+                                      (1) Evaluate existing text
+                     Language
+                      Model
+                                     (2) Generate new text
+EXAMPLE: SPEECH RECOGNITION
+
+
+
+
+      Speech audio
+
+                                    “Night begins in one hour.”
+
+
+Acoustic
+  model               “Knight begins in one our.”  X
+                                                             Language
+                      “Knight beg in sin one our.” X
+                                                              Model
+                      “Night begins in one hour.”
+LANGUAGE MODELS
+
+
+
+
+ Language models are also useful for:
+ • Machine translation
+ • Handwriting recognition
+ • Optical character recognition
+ • Document summarization
+ • Dialog generation             X
+                                        Language
+ • Linguistic decipherment       X       Model
+ • Text style transfer
+ • More…
+EXAMPLE: TEXT GENERATION
+EXAMPLE: TEXT GENERATION
+
+                                             Prompt
+                Write a crea)ve ad for the following product to run on Facebook aimed
+                at parents:
+
+                Product: Learning Room is a virtual environment to help students from
+                kindergarten to high school excel in school.
+
+
+                                             Output
+                Are you looking for a way to help your child excel in school? Look no
+                further than Learning Room! Our virtual environment is designed to help
+                students from kindergarten to high school learn and grow. With our
+                help, your child will be able to get ahead in school and achieve their
+                academic goals.
+
+source: https://beta.openai.com/examples
+EXAMPLE: TEXT SUMMARIZATION
+                                                    Prompt
+               A neutron star is the collapsed core of a massive supergiant star, which
+               had a total mass of between 10 and 25 solar masses, possibly more if the
+               star was especially metal-rich. [1] Neutron stars are the smallest and
+               densest stellar objects, excluding black holes and hypothetical white
+               holes, quark stars, and strange stars. [2] Neutron stars have a radius on
+               the order of 10 kilometres (6.2 mi) and a mass of about 1.4 solar masses.
+               [3] They result from the supernova explosion of a massive star,
+               combined with gravitational collapse, that compresses the core past
+               white dwarf star density to that of atomic nuclei.
+
+               Tl;dr                                Output
+               A neutron star is the collapsed core of a massive supergiant star. These
+               ultra-dense objects are incredibly fascinating due to their strange
+               properties and their potential for phenomena such as extreme
+               gravitational forces and a strong magnetic field.
+
+         source: https://beta.openai.com/examples
+EXAMPLE: CODE GENERATION
+                                             Prompt
+          Get the current price of Bitcoin using Coindesk′s API and display it as giant
+          red letters in the middle of a webpage
+                                             Output
+                 /* Get the current price of Bitcoin using Coindesk's API and
+                 display it as giant red letters in the middle of a webpage */
+                 var xhr = new XMLHttpRequest();
+                 xhr.open('GET','https://api.coindesk.com/vi/bpi/currentprice.json',
+                 true);
+                 xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        var data = JSON.parse (xhr.responseText);
+                        var bitcoinPrice = document.createElement('div’);
+                        bitcoinPrice.innerHTML= data.bpi.USD.rate;
+                        bitcoinPrice.style.fontSize = '100px’;
+                        bitcoinPrice.style.color = ‘red’;
+                    document.body.appendChild(bitcoinPrice);
+                 }
+                 };
+                 xhr.send();
+
+
+    source: https://betterprogramming.pub/
+LANGUAGE MODELS
+
+
+A language model is a probability distribution over sequences
+of words (sentences):
+
+                   𝑃 𝑤 = 𝑃 𝑤! … 𝑤"
+• What’s w? (closed vs open vocabulary)
+• What’s n? (must sum to one over all lengths)
+• Can have rich structure or be linguistically naive
+
+Why language models?
+• Want “good” (e.g. fluent) sentences to have high probability
+• Evaluate sentences via their probability
+• Generate sentences by sampling from the distribution
+LANGUAGE MODELS
+
+
+
+
+Types of language models:
+
+• N-Gram language models (this lecture) – simple and fast,
+  limited power
+
+• Neural language models – powerful, more complex, slower
+  to train, slower to use in some applications
+
+• Conditional language models – conditions on an input,
+  used for applications like machine translation and
+  summarization
+
+--- end {lec01_types_of_language_models.pdf} ---
+--- start{lec02_introduction_to_n_gram_language_models.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+INTRODUCTION TO N-GRAM
+LANGUAGE MODELS
+LANGUAGE MODELS
+
+
+
+
+                  N-Gram Models
+N-GRAM MODELS
+
+
+Use chain rule to generate words left-to-right
+
+
+
+Conditioning on the entire left context is difficult
+
+                P(??? | Turn to page 134 and look at the picture of the)
+
+N-gram models make a Markov assumption
+N-GRAM MODELS
+
+
+
+ How do we know P(w | history)?
+ • Use statistics from data (i.e. count n-grams in large corpus)
+ • For example, if we want to estimate P(door | the):
+
+                     198015222 the first
+                     194623024 the same
+   Training Counts
+
+
+
+
+                     168504105 the following
+                     158562063 the world
+                     …
+                     14112454 the door
+                     -----------------
+                     23135851162 the *
+
+
+ • This is the maximum likelihood estimate
+INCREASING N-GRAM ORDER
+
+
+
+            Higher orders capture more dependencies
+                   Bigram Model               Trigram Model
+               198015222 the first        197302 close the window
+               194623024 the same         191125 close the door
+               168504105 the following    152500 close the gap
+               158562063 the world        116451 close the thread
+               …                          …
+               14112454 the door          87298 close the deal
+               -----------------          -----------------
+               23135851162 the *          3785230 close the *
+
+
+
+             P(door | the) = 0.0006      P(door | close the) = 0.05
+INCREASING N-GRAM ORDER
+
+                • 'To him swallowed confess hear both. Which. Of save on trail for are ay device and rote
+   Unigram         life have
+                • Every enter now severally so, let
+                • Hill he late speaks; or! a more to leg less first you enter
+                • Are where exeunt and sighs have rise excellency took of.. Sleep knave we. near; vile like
+                • What means, sir. I confess she? then all sorts, he is trim, captain.
+                •Why dost stand forth thy canopy, forsooth; he is this palpable hit the King Henry.
+                  Live king. Follow.
+   Bigram
+
+
+
+
+                •What we, hath got so she that I rest and sent to scold and nature bankrupt, nor the first
+                  gentleman?
+                •Enter Menenius, if it so many good direction found'st thou art a strong upon command
+                  of fear not a liberal largess given away, Falstaff! Exeunt
+                • Sweet prince, Falstaﬂ shall die. Harry of Monmouth's grave.
+   Trigram
+
+
+
+
+                • This shall forbid it should be branded, if renown made it empty.
+                • Indeed the duke; and had a very good friend.
+                • Fly, and will rid me these news of price. Therefore the sadness of parMng, as they say,
+                'Ms done.
+                • King Henry. What! I will go seek the traitor Gloucester. Exeunt some of the watch. A
+   Quadrigram
+
+
+
+
+                  great banquet serv'd in;
+                • Will you not tell me who I am?
+                • It cannot be but so.
+                • Indeed the short and the long. Marry. 'Ms a noble Lepidus.
+
+--- end {lec02_introduction_to_n_gram_language_models.pdf} ---
+--- start{lec03_sparsity_and_n_gram_language_models.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+SPARSITY AND N-GRAM
+LANGUAGE MODELS
+      SPARSITY
+
+
+
+
+Please close the first door on the left.
+    3380 please close the door                        1
+    1601 please close the window                     0.8
+
+
+
+
+                                     Fraction Seen
+    1164 please close the new                        0.6
+    1159 please close the gate                                               Unigrams
+                                                     0.4
+    …
+    0 please close the first                         0.2                     Bigrams
+
+    -----------------                                 0
+                                                           0     500000            1000000
+    13951 please close the *
+                                                               Num ber of Words
+
+--- end {lec03_sparsity_and_n_gram_language_models.pdf} ---
+--- start{lec04_n_gram_estimation.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+N-GRAM ESTIMATION
+SPARSITY
+
+
+
+
+           N-Gram Estimation
+SMOOTHING
+
+    We often want to make estimates from sparse statistics:
+            P(w | denied the)
+             3 allegations
+             2 reports
+
+
+
+
+                                allegations
+             1 claims
+
+
+
+
+                                                     reports
+             1 request
+                                                                                                                      …
+
+
+
+
+                                                                                      charges
+
+
+
+                                                                                                         benefits
+                                                                          request
+
+
+
+
+                                                                                                motion
+                                                                claims
+             7 total
+
+
+    Smoothing flattens spiky distributions so they generalize better:
+            P(w | denied the)
+             2.5 allegations
+             1.5 reports
+
+
+                                       allegations
+                                   allegations
+             0.5 claims
+
+
+
+
+                                                                                     charges
+
+
+
+
+                                                                                                           benefits
+             0.5 request
+
+
+
+
+                                                                                                motion
+                                                                                                                      …
+                                                      reports
+             2 other
+
+
+
+
+                                                                           request
+                                                                 claims
+             7 total
+    Very important, but easy to do badly.
+LIKELIHOOD AND PERPLEXITY
+                                                                  grease 0.5
+              How do we measure LM “goodness”?                    sauce 0.4
+              • Shannon’s game: predict the next word             dust 0.05
+                                                                  ….
+                     When I eat pizza, I wipe off the _________
+                                                                  mice 0.0001
+
+              Formally: deﬁne test set (log) likelihood           ….
+                                       X                          the   1e-100
+                     log P (X|✓) =            log P (w|✓)
+                                       w2X
+
+              Perplexity: “average per word branching factor”
+                                          ✓                  ◆
+                                               log P (X|✓)
+                   perp(X, ✓) = exp
+                                                   |X|
+TRAIN, VALIDATION, TEST
+
+
+       Want to maximize likelihood on test, not training data
+       • Empirical n-grams won’t generalize well
+       • Models derived directly from counts require smoothing
+         parameters to be tuned on held-out data to simulate test
+         generalization
+
+                                           Held-Out           Test
+                      Training Data
+                                             Data             Data
+
+
+                  Counts / parameters   Hyperparameters   Evaluate here
+                      from here            from here
+
+       • Set hyperparameters to maximize the likelihood of the held-out
+         data
+
+--- end {lec04_n_gram_estimation.pdf} ---
+--- start{lec05_smoothing_in_n_gram_language_models.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+SMOOTHING IN N-GRAM
+LANGUAGE MODELS
+SMOOTHING METHODS
+
+
+
+
+              Smoothing N-Gram
+               Language Models
+SMOOTHING: INTERPOLATION
+
+
+
+                   Please close the first door on the left.
+              4-Gram                        3-Gram                      2-Gram
+     3380 please close the door      197302 close the window     198015222 the first
+     1601 please close the window    191125 close the door       194623024 the same
+     1164 please close the new       152500 close the gap        168504105 the following
+     1159 please close the gate      116451 close the thread     158562063 the world
+     …                               …                           …
+     0      please close the first   8662 close the first        …
+     -----------------               -----------------           -----------------
+     13951 please close the *        3785230 close the *         23135851162 the *
+                0.0                         0.002                        0.009
+
+                 Specific but                                  Dense but
+                     Sparse                                    General
+LINEAR INTERPOLATION
+
+
+
+     Simplest way to mix different orders: linear interpolation
+
+
+
+     •   How to choose lambdas?
+     •   Should lambda depend on the counts of the histories?
+
+     Choosing weights: either grid search or EM using held-out data
+
+     Better methods have interpolation weights connected to context
+     counts, so you smooth more when you know less
+SMOOTHING: DISCOUNTING
+
+
+
+
+  Observation: N-grams occur more in training data than they will later
+
+               Empirical Bigram Counts (Church and Gale, 91)
+
+                         Count in 22M Words   Future c* (Next 22M)
+                                 1                   0.45
+                                 2                   1.25
+                                 3                   2.24
+                                 4                   3.23
+                                 5                   4.21
+ABSOLUTE DISCOUNTING
+
+
+
+
+     Absolute discounting
+     • Reduce numerator counts by a constant d (e.g. 0.75)
+     • Maybe have a special discount for small counts
+     • Redistribute the “shaved” mass to a model of new events
+
+     Example formulation
+SMOOTHING: FERTILITY
+
+
+
+
+    Shannon game: “There was an unexpected _____”
+    • “delay”?
+    • “Francisco”?
+
+    Context fertility: number of distinct context types that a word
+    occurs in
+    • What is the fertility of “delay”?
+    • What is the fertility of “Francisco”?
+    • Which is more likely in an arbitrary new context?
+KNESER-NEY SMOOTHING
+
+
+
+  Kneser-Ney smoothing combines two ideas
+  • Discount and reallocate like absolute discounting
+  • In the backoff model, word probabilities are proportional to context
+    fertility, not frequency
+                                  0       0
+                       P (w) / |{w : c(w , w) > 0}|
+
+  Theory and practice
+  • Practice: KN smoothing has been repeatedly proven both effective and
+    efficient
+  • Theory: KN smoothing as approximate inference in a hierarchical
+    Pitman-Yor process [Teh, 2006]
+WHAT ACTUALLY WORKS?
+
+
+
+
+Trigrams and beyond:
+• Unigrams, bigrams generally useless
+• Trigrams much better
+• 4-, 5-grams and higher are good
+  enough to be practically useful
+Discounting
+• Absolute discounting, Good-Turing,
+  held-out estimation, Witten-Bell, etc…
+Context counting
+• Kneser-Ney construction of lower-order
+  models
+
+
+                                           [Graph from Joshua Goodman]
+BIG DATA
+
+
+
+
+           N-Gram Models
+            from Big Data
+DATA >> METHOD
+
+ Having more data is better…
+                    10
+                    9.5                                                100,000 Katz
+                     9                                                 100,000 KN
+          Entropy   8.5                                                1,000,000 Katz
+                     8                                                 1,000,000 KN
+                    7.5                                                10,000,000 Katz
+                     7                                                 10,000,000 KN
+                    6.5                                                all Katz
+                     6                                                 all KN
+                    5.5
+                          1   2   3   4    5   6   7     8   9 10 20
+                                          n-gram order
+ … but so is using a better estimator
+ Another issue: N > 3 has huge costs in some speech recognizers
+WHAT’S IN AN N-GRAM?
+
+
+
+
+       Just about every local correlation!
+       •   Word class restrictions: “will have been ___”
+       •   Morphology: “she ___”, “they ___”
+       •   Semantic class restrictions: “danced the ___”
+       •   Idioms: “add insult to ___”
+       •   World knowledge: “ice caps have ___”
+       •   Pop culture: “the empire strikes ___”
+
+       But not the long-distance ones
+       • “The computer which I had just put into the machine room on
+         the fifth floor ___.”
+
+--- end {lec05_smoothing_in_n_gram_language_models.pdf} ---
