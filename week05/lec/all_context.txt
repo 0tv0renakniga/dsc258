@@ -1,0 +1,460 @@
+--- start{lec01_neural_language_models.pdf} ---
+DSC 258- NATURAL LANGUAGE PROCESSING
+
+NEURAL LANGUAGE
+MODELS
+Recurrent Language Models
+Recurrent Language Models
+Recurrent Language Models
+Recurrent Language Models
+Recurrent Language Models
+Recurrent Language Models
+  • Markov assumption:
+
+                                       ∏
+                      p(x1, …, xn) =       p(xi | xi−k, …, xi−1)
+                                       i
+
+  • Chain-rule (no assumptions):
+
+
+                                       ∏
+                      p(x1, …, xn) =       p(xi | x1, …, xi−1)
+                                       i
+  • But what about number of params / smoothing?
+
+
+                             p(xi | x1, …, xi−1)
+
+--- end {lec01_neural_language_models.pdf} ---
+--- start{lec02_neural_ngram_models.pdf} ---
+DSC 258- NATURAL LANGUAGE PROCESSING
+
+NEURAL N-GRAM
+MODELS
+Neural N-gram Model
+
+
+p(xi | xi−k, …, xi−1)
+
+Logistic regression:
+            ⊤
+   ∝ exp(w f(xi−k, …, xi−1))
+
+Fully-connected NN:
+        ⊤   ⊤   ⊤
+  ∝ expw3 σW2 σW1 f(xi−k, …, xi−1)
+    Neural Ngram Model
+
+
+   p(xi | xi−k, …, xi−1)                         Feature
+                                                 vector
+                                                                            cat the dog fox
+       ⊤   ⊤   ⊤                              f(xi−k, …, xi−1)
+ ∝ expw3 σW2 σW1 f(xi−k, …, xi−1)                                h1   h2   Class label
+                                                                               xi
+                         ⊤
+Hidden layer 1:   h1 = σW1 f(xi−k, …, xi−1)
+                         ⊤
+Hidden layer 2:   h2 = σW2 h1
+                                  ⊤
+ Output layer:    p(xi | …) ∝ expw3 h2
+    Neural Ngram Model
+
+
+   p(xi | xi−k, …, xi−1)                         Feature
+                                                 vector
+                                                                            cat the dog fox
+       ⊤   ⊤   ⊤                              f(xi−k, …, xi−1)
+ ∝ expw3 σW2 σW1 f(xi−k, …, xi−1)                                h1   h2   Class label
+                                                                               xi
+                         ⊤
+Hidden layer 1:   h1 = σW1 f(xi−k, …, xi−1)
+                         ⊤
+Hidden layer 2:   h2 = σW2 h1
+                                  ⊤
+ Output layer:    p(xi | …) ∝ expw3 h2
+  Neural Ngram Model
+
+
+ p(xi | xi−k, …, xi−1)                Feature
+                                      vector
+                                                                 cat the dog fox
+      ⊤   ⊤   ⊤                    f(xi−k, …, xi−1)
+∝ expw3 σW2 σW1 f(xi−k, …, xi−1)                      h1   h2   Class label
+                                                                    xi
+         θ
+ Model parameters
+  Neural Ngram Model
+
+
+ p(xi | xi−k, …, xi−1)                     Feature
+                                           vector
+                                                                      cat the dog fox
+      ⊤   ⊤   ⊤                         f(xi−k, …, xi−1)
+∝ expw3 σW2 σW1 f(xi−k, …, xi−1)                           h1   h2   Class label
+                                                                         xi
+       Training objective
+
+       ∑
+ max       log pθ(xi | xi−k, …, xi−1)
+  θ
+       i
+  Neural Ngram Model
+
+
+ p(xi | xi−k, …, xi−1)                     Feature
+                                           vector
+                                                                      cat the dog fox
+      ⊤   ⊤   ⊤                         f(xi−k, …, xi−1)
+∝ expw3 σW2 σW1 f(xi−k, …, xi−1)                           h1   h2   Class label
+                                                                         xi
+       Gradient ascent!
+
+       ∑
+  ∇θ       log pθ(xi | xi−k, …, xi−1)
+       i
+  Neural Ngram Model
+
+
+ p(xi | xi−k, …, xi−1)                Feature
+                                      vector
+                                                                 cat the dog fox
+      ⊤   ⊤   ⊤                    f(xi−k, …, xi−1)
+∝ expw3 σW2 σW1 f(xi−k, …, xi−1)                      h1   h2   Class label
+                                                                    xi
+ Stochastic gradient ascent!
+
+ ∇θ log pθ(xi | xi−k, …, xi−1)
+         Input features?
+                                         p(xi | xi−k, …, xi−1)
+f(xi−k, …, xi−1)
+                                   Feature
+  = concate(xi−k), …, e(xi−1)      vector
+                                                              cat the dog fox
+                                f(xi−k, …, xi−1)
+                                                   h1   h2   Class label
+                                                                 xi
+e(the)
+e(cat)
+         Input features?
+                                         p(xi | xi−k, …, xi−1)
+f(xi−k, …, xi−1)
+                                   Feature
+  = concate(xi−k), …, e(xi−1)      vector
+                                                              cat the dog fox
+                                f(xi−k, …, xi−1)
+                                                   h1   h2   Class label
+                                                                 xi
+e(the)
+e(cat)
+
+--- end {lec02_neural_ngram_models.pdf} ---
+--- start{lec03_rnn_language_models.pdf} ---
+DSC 258- NATURAL LANGUAGE PROCESSING
+
+RNN LANGUAGE
+MODELS
+Feed-forward vs. Recurrent
+
+
+                             Context size 1:
+
+ What if we now remove
+ the Markov assumption?      Context size 2:
+
+  p(xi | x1, …, xi−1)        Context size 3:
+
+
+
+
+                                  …
+
+
+
+
+                                               …
+Recurrent Neural Network LM
+                                                      ⊤            ⊤
+                                            hi = σ(W hi−1 + U xi)
+                  h0    h1 h2 h3
+        Initial                                               p(x4 | x1, x2, x3)
+       hidden
+                                                                                 ⊤
+        state                                 cat the dog fox  = softmax(V h3)
+
+                                                                       exp(v(cat) ⋅ h3)
+                       e(x1) e(x2) e(x3)    p(x4 = cat | x1, x2, x3) =
+                                                                       ∑x exp(v(x) ⋅ h3)
+                    Input word embeddings
+
+
+          Input                                 Output
+                                                                       d×m
+        embedding
+                       E∈ℝ    d×m              embedding     V∈ℝ
+         matrix:                                matrix:
+Recurrent Neural Network LM
+
+
+                              p(x4 | x1, x2, x3)
+
+          e(x1) e(x2) e(x3)
+
+                              p(x5 | x2, x3, x4)
+
+          e(x2) e(x3) e(x4)
+Recurrent Neural Network LM
+
+
+  p(x1, …, xn) =              h0                                   p(x4 | x1, …, x3)
+
+
+
+   ∏
+        p(xi | x1, …, xi−1)         e(x1) e(x2) e(x3)
+                                   h1                                  p(x5 | x1, …, x4)
+    i
+
+                                         e(x2) e(x3) e(x4)
+                                        h2                                   p(x6 | x1, …, x4)
+
+
+                                               e(x3) e(x4) e(x5)
+Recurrent Neural Network LM
+
+
+  p(x1, …, xn) =              h0                                   p(x4 | x1, …, x3)
+
+
+
+   ∏
+        p(xi | x1, …, xi−1)         e(x1) e(x2) e(x3)
+                                   h1                                  p(x5 | x1, …, x4)
+    i
+
+                                         e(x2) e(x3) e(x4)
+                                        h2                                   p(x6 | x1, …, x4)
+
+        θ = (E, V, U, W, h0)
+                                               e(x3) e(x4) e(x5)
+Recurrent Neural Network LM
+
+                               ∏
+              p(x1, …, xn) =         p(xi | x1, …, xi−1)
+                                i
+
+
+
+
+    h0                                       θ = (E, V, U, W, h0)
+
+         x1   x2   x3 x4   x5       x6
+Sampling
+
+                      ∏
+     p(x1, …, xn) =        p(xi | x1, …, xi−1)
+                       i
+
+                                         x1 ∼ p(x1)
+
+
+
+
+x1   x2   x3 x4   x5       x6
+Sampling
+
+                      ∏
+     p(x1, …, xn) =           p(xi | x1, …, xi−1)
+                         i
+
+                                            x2 ∼ p(x2 | x1)
+
+
+
+
+x1   x2   x3   x4   x5       x6
+Sampling
+
+                      ∏
+     p(x1, …, xn) =           p(xi | x1, …, xi−1)
+                         i
+
+                                            x3 ∼ p(x3 | x1, x2)
+
+
+
+
+x1   x2   x3   x4   x5       x6
+Sampling
+
+                         ∏
+     p(x1, …, xn) =           p(xi | x1, …, xi−1)
+                         i
+
+                                      x4 ∼ p(x4 | x1, x2, x3)
+
+
+
+
+x1   x2   x3   x4   x5       x6
+Sampling
+
+                      ∏
+     p(x1, …, xn) =         p(xi | x1, …, xi−1)
+                       i
+
+                                xi ∼ p(xi | x1, …, xi−1)
+
+
+
+
+x1   x2   x3 x4   x5       x6
+
+--- end {lec03_rnn_language_models.pdf} ---
+--- start{lec04_training_rnn_language_models.pdf} ---
+DSC 258- NATURAL LANGUAGE PROCESSING
+
+TRAINING RNN
+LANGUAGE MODELS
+     Likelihood
+
+Single sentence: x = (x1, …, xn)
+
+
+
+                     ∑
+log p(x1, …, xn) =       log p(xi | x1, …, xi−1)
+                     i
+
+
+Corpus of   (1)  (1)     (1)
+sentences: x = (x1 , …, xn )        …     x   (K)       (K)     (K)
+                                                    = (x1 , …, xn )
+
+         (k)     (k)               (k) (k)      (k)
+∑                      ∑∑
+  log p(x1 , …, xn ) =     log p(xi | x1 , …, xi−1)
+k                      k i
+ Parameters
+
+                            ∏
+ p(x1, …, xn; θ) =                   p(xi | x1, …, xi−1; θ)
+                               i
+  Model
+parameters        θ                                                            θ = (E, V, U, W, h0)
+
+                                   hi = σ(W ⊤hi−1 + U ⊤e(xi))
+
+             h0   h1 h2      h3
+   Initial
+  hidden
+                                      cat the dog fox
+   state
+
+
+                 e(x1) e(x2) e(x3)                                    exp(vcat ⋅ h3)
+                                           p(x4 = cat | x1, x2, x3) =
+             Input word embeddings                                    ∑x exp(vx ⋅ h3)
+       Training
+
+Training        x   (1)       (1)     (1)
+                          = (x1 , …, xn )   … x (K) = (x (K), …, xn(K))
+                                                         1
+
+Training
+             (k)     (k)                      (k) (k)      (k)
+ θ ∑                           θ ∑∑
+max   log p(x1 , …, xn ; θ) = max     log p(xi | x1 , …, xi−1; θ)
+    k                             k i
+
+Follow the gradient of the
+
+                               (k)     (k)
+                      ∑
+       θ = θ + η ⋅ ∇θ   log p(x1 , …, xn ; θ)
+                      k
+Gradient Ascent
+
+
+
+                                   log p(x1(k), …, xn(k); θ)
+                               ∑
+                      F(θ) =
+                               k
+
+
+
+
+                  θ
+Gradient Ascent
+
+
+
+                                   log p(x1(k), …, xn(k); θ)
+                               ∑
+                      F(θ) =
+                               k
+
+
+
+
+          ∇θ
+                  θ
+Gradient Ascent
+
+
+
+                                   log p(x1(k), …, xn(k); θ)
+                               ∑
+                      F(θ) =
+                               k
+
+
+
+
+            ∇θ
+
+                  θ
+Gradient Ascent
+
+
+
+                                   log p(x1(k), …, xn(k); θ)
+                               ∑
+                      F(θ) =
+                               k
+
+
+
+
+            ∇θ
+
+                  θ
+
+--- end {lec04_training_rnn_language_models.pdf} ---
+--- start{lec05_experiments_rnn_language_models.pdf} ---
+DSC 258- NATURAL LANGUAGE PROCESSING
+
+EXPERIMENTS WITH RNN
+LANGUAGE MODELS
+Recurrent Language Models
+
+
+
+
+Graphs from http://deliprao.com
+Recurrent Language Models
+
+
+
+
+Graphs from http://deliprao.com
+Recurrent Language Models
+
+
+
+
+Samples from http://karpathy.github.io
+
+--- end {lec05_experiments_rnn_language_models.pdf} ---

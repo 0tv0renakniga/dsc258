@@ -1,0 +1,1501 @@
+--- start{lec01_dense_vector_representations.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+DENSE VECTOR
+REPRESENTATIONS
+OUTLINE
+
+
+
+
+   Word Embedding
+     •    Traditional Distributional Representation
+
+     •    Dense Vector Representations
+     •    Interesting Properties of Word Vectors
+
+     •    Applying Word Embeddings
+DENSE VECTOR REPRESENTATIONS
+
+
+
+   Dense Vector Representa.ons
+                               Previous Word Representation
+       Sparse long vectors (dimensions = |V| or |D|)
+       • |V| is tens of thousands
+       • Dimensions are not interpretable
+
+                                     Word Embedding
+       Dense Vectors
+       • Short: Dimensions 50-1000
+       • Real numbers (could be +ve or –ve)
+       • Has been shown to work better
+       • Can help with generalization because of fewer dimensions
+Word Embeddings
+       Two Ways to Interpret the Hypothesis
+        Translation 1: Given context words, can we predict the missing word?
+          • Continuous Bag of Words (CBOW)
+          • P(w | c1, c2, …, cm)
+        Translation 2: Given the word, can we predict its contexts?
+          • Skip-Gram
+          • P(c | w)
+
+
+
+
+Mikolov, Tomas, Quoc V. Le, and Ilya
+Sutskever. "Exploiting similarities among
+languages for machine translation." arXiv
+preprint arXiv:1309.4168 (2013).
+Skip-gram
+Given the word, can we predict its contexts?
+      $
+𝐿 𝜃 =$    $       𝑃 𝑤!+( 𝑤! ; 𝜃)
+     !"# %&'('&
+           ()*
+                        Maximize data likelihood
+𝜃: all variables in our model that need to be op9mized
+m: window size
+𝑤! : center word
+                                   Self-supervised
+                                                       Source: https://bit.ly/3hqPhjA
+DENSE VECTOR REPRESENTATIONS
+
+
+
+   Skip-gram
+     Given the word, can we predict its
+     contexts?
+      Maximize Likelihood      t = 1, ……, T
+              $
+   𝐿 𝜃 =$           $          𝑃 𝑤!+( 𝑤! ; 𝜃)   each position
+             !"# %&'('&                         in corpus
+                   ()*
+
+    Objec9ve func9on (Cost/Loss ) 𝐽 𝜃 is the avg. log likelihood
+      Minimize Cost/Loss            $
+                            1                     1
+                     𝐽 𝜃 = − log 𝐿 𝜃            =− 0     0       log(𝑃 𝑤!+( 𝑤! ; 𝜃))
+                            𝑇                     𝑇
+                                                    !"# %&'('&
+                                                          ()*
+                              Minimize
+                                                           $
+                                     1               1
+  Skip-gram                   𝐽 𝜃 = − log 𝐿 𝜃
+                                     𝑇
+                                                   =− 0
+                                                     𝑇
+                                                               0
+                                                          !"# %&'('&
+                                                                       log(𝑃 𝑤!+( 𝑤! ; 𝜃))
+
+                                                                ()*
+    How can we calculate 𝑃 𝑤!"# 𝑤! ; 𝜃)?
+           Base this probability on embedding similarity
+
+
+    𝑃 𝑤!"# 𝑤! ) should be high if 𝑤! and 𝑤!"# are likely to co-occur
+           Embeddings for both w$"% and w$ are similar
+Two embedding vectors are similar if they have a high dot product
+
+     Similarity w,+- , w, ≈ w,+- H w,
+                       Minimize
+                                              $
+                              1            1
+Skip-gram              𝐽 𝜃 = − log 𝐿 𝜃
+                              𝑇
+                                         =− 0
+                                           𝑇
+                                                  0
+                                             !"# %&'('&
+                                                          log(𝑃 𝑤!+( 𝑤! ; 𝜃))
+
+                                                   ()*
+How can we calculate 𝑃 𝑤!"# 𝑤! ; 𝜃)?
+
+Store two vectors per word w:
+   • 𝑤!"# → when w is a 𝑐𝑒𝑛𝑡𝑒𝑟 word
+   • 𝑤!$# → when w is a 𝑐𝑜𝑛𝑡𝑒𝑥𝑡 word
+                                                   w$"% 9 w$
+For a center word c and context word o
+   • P(o|c) =
+                          A metric that captures similarity
+                          Normalized to form a probability
+                            Minimize
+                                                           $
+                                   1               1
+Skip-gram                   𝐽 𝜃 = − log 𝐿 𝜃
+                                   𝑇
+                                                 =− 0
+                                                   𝑇
+                                                                 0
+                                                         !"# %&'('&
+                                                                        log(𝑃 𝑤!+( 𝑤! ; 𝜃))
+
+                                                               ()*
+ How can we calculate 𝑃 𝑤!"# 𝑤! ; 𝜃)?
+
+• For a center word c and context word o
+                  %&'()!"# *!!$# )                              Softmax function
+  • P(o|c) =
+               ∑%∈' %&'(-!"# *!!$# )
+
+                                                                           Prob.
+                          Arbitrary                                        Distribution
+                          Input
+
+                                       Source: https://bit.ly/3Ejonmz
+                    Minimize
+                                           $
+                           1            1
+Skip-gram           𝐽 𝜃 = − log 𝐿 𝜃
+                           𝑇
+                                      =− 0
+                                        𝑇
+                                               0
+                                          !"# %&'('&
+                                                       log(𝑃 𝑤!+( 𝑤! ; 𝜃))
+
+                                                ()*
+
+
+Goal: Adjust word vectors gradually such as we minimize loss
+
+θ: encapsulates all model parameters
+           𝑤_1!"#
+           𝑤_2!"#
+             .                 Minimize loss func9on using
+             .
+     θ=    𝑤_𝑉!"#              stochas9c gradient descent
+           𝑤_1!$#     2dV
+           𝑤_2!$#
+             .
+             .
+           𝑤_𝑉!$#
+DENSE VECTOR REPRESENTATIONS
+
+
+
+   Skip-gram
+    Minimize                                     $
+                     1                          1
+              𝐽 𝜃 = − log 𝐿 𝜃                 =− 0   0       log(𝑃 𝑤!+( 𝑤! ; 𝜃))
+                     𝑇                          𝑇
+                                                !"# %&'('&
+                                                      ()*
+
+                           456(8!"# 9:!$# )
+             P(o|c) =
+                        ∑%∈' 456(=!"# 9:!$# )
+
+
+
+      Assignment
+           Take the partial derivative of 𝐽 𝜃 w.r.t. 𝑐&'!
+                                   ?
+Negative Sampling: 𝑃 (𝑤)
+ So far: Maximizing the similarity of words in the same context
+
+              ()*(,!"# -&!$# )
+                                        Summation over V
+P(o|c) =                                is computationally
+           ∑%∈' ()*(0!"# -&!$# )
+                                        intensive!!
+ Given a word and its context words, there are too many
+ negative instances that can be used for training.
+ (we can pick a few)
+Word2vec learns embeddings by starting with an initial set of embedding vectors
+        Word2vec learns embeddings by starting with an initial set of embedding vecto
+ nd thenand
+         iteratively  shiftingshifting
+             then iteratively  the embedding     of eachofword
+                                       the embedding         eachwwordto bewmore
+                                                                              to be like
+                                                                                    morethe   em-
+                                                                                           like the em
+ eddingsbeddings
+          of wordsofthat  occur
+                      words  thatnearby  in texts,inand
+                                  occur nearby          lessand
+                                                     texts,   like  thelike
+                                                                 less    embeddings     of words
+                                                                            the embeddings     of word
+        Skip-Gram
+hat don’t occur
+        that don’tnearby.   Negative
+                           Let’s
+                   occur nearby. start
+                                   Let’s     Sampling
+                                       bystart
+                                          considering           Training
+                                                         a single
+                                               by considering       piece of
+                                                                  a single       data
+                                                                               training
+                                                                            piece        data: data:
+                                                                                   of training
+ .. lemon,  a [tablespoon
+       ... lemon,          of apricot
+                   a [tablespoon       jam, jam, a] pinch
+                                  of apricot              ... ...
+                                                      a] pinch
+        …lemon,c1 a [tablespoon
+                      c1 c2      tc2of apricot
+                                        tc3  c3 jam,
+                                                 c4    a] pinch…
+                                                      c4
+   This example   has  a     c1 word t (apricot),
+                         target            c2 [target]
+                                                    and 4 c3 c4words in the L = ±2
+                                                          context
+           This example has a target word t (apricot), and 4 context words in the L = ±
+window,window,
+        resultingresulting
+                   in 4 positive trainingtraining
+                           in 4 positive   instances (on the(on
+                                                  instances  leftthe
+                                                                  below):
+                                                                     left below):
+         positivepositive
+                  examples   +
+                          examples  +                 negative examples
+                                                             negative      -
+                                                                      examples   -
+         t       tc       c                    t      tc      c t        t c      c
+         apricot apricot
+                  tablespoon
+                          tablespoon           apricotapricot
+                                                       aardvark   apricotapricot
+                                                              aardvark      seven seven
+         apricot apricot
+                  of      of                   apricotapricot
+                                                       my my apricotapricot foreverforever
+         apricot apricot
+                  jam     jam                  apricotapricot
+                                                       where whereapricotapricot
+                                                                            dear dear
+         apricot apricot
+                  a       a                    apricotapricot
+                                                       coaxialcoaxial
+                                                                  apricotapricot
+                                                                            if    if
+           • Minimize the similarity of the (w, cneg ) pairs from the negative examples.
+           If we consider one word/context pair (w, cpos ) with its k noise words cneg1 ...cnegk ,
+      we can express these two goals as the following loss function L to be minimized
+         Negative Sampling Objective
+      (hence the ); here the first term expresses that we want the classifier to assign the
+      real context word cpos a high probability of being a neighbor, and the second term
+Objective:  Maximize
+      expresses         thewant
+                  that we   similarity  of each
+                                to assign  the target  with the
+                                                of the noise     actual
+                                                             words   cnegi context  words, and
+                                                                           a high probability of
+minimize thea similarity
+      being                of the
+               non-neighbor,   all target withbecause
+                                   multiplied   the k negative
+                                                       we assumesampled      non-neighbor words.
+                                                                   independence:
+                                    "               k
+                                                                    #
+                                                  Y
+                    LCE = log P(+|w, cpos )           P( |w, cnegi )
+                                                    i=1
+                               "                                                   #
+ k is a hyper-parameter                                  k
+                                                         X
+    3 to 10 are all     =          log P(+|w, cpos ) +         log P( |w, cnegi )
+    reasonable choices                                   i=1
+                               "                         k
+                                                                                          #
+                                                         X
+                         =         log P(+|w, cpos ) +         log 1     P(+|w, cnegi )
+                                                         i=1
+                               "                        k
+                                                                               #
+                                                        X
+                         =         log s (cpos · w) +         log s ( cnegi · w)              (6.34)
+                                                        i=1
+    Optimization Objective
+Adjust the word weights to                    aardvark
+                                                                    move apricot and jam closer,
+  • make the positive pairs                       apricot   w           increasing cpos z w
+
+    more likely                         W
+  • and the negative pairs less                                                     “…apricot jam…”
+                                                   zebra
+    likely,                         !         aardvark                        move apricot and matrix apart
+  • over the entire training set.                    jam    cpos                 decreasing cneg1 z w
+
+                                        C         matrix    cneg1
+                                            k=2
+                                                  Tolstoy   cneg2       move apricot and Tolstoy apart
+                                                                            decreasing cneg2 z w
+                                                   zebra
+                                              i=1
+ontext word cpos a" high probability of kbeing a neighbor, and the#second term
+                                               X
+ ses that we=want tolog assign each
+                          P(+|w,    cposof) +
+                                            the noise
+                                                    log words
+                                                          1 P(+|w,cnegi acneg
+                                                                          high ) probability of
+        Deriva.ves
+   V ECTOR   S EMANTICS
+a non-neighbor,            of AND
+                 all multipliedthebecause
+                                        Loss
+                                        E          Func.on
+                                                  we
+                                           MBEDDINGS
+                                                i=1   assume independence:
+                                                                             i
+
+                  " "                        k k
+                                                                 #     #
+                                            Y
+                                            X
+  as anLexercise
+        CE =     atlogthes
+                     log  P(+|w,
+                            (cposof·cw)
+                          end                    P(
+                                         )chapter):
+                                      pos+
+                                     the              s ( cneg
+                                                  log |w,   cneg
+                                                               i i · w)
+                                                                )                         (6.34)
+                                 i=1
+                                  i=1
+                "                                    #
+ , we want∂to                        k
+            L maximize the dot product
+                 CE                 X of the word with the actual context
+             =
+  and minimize
+                     =
+                     log [s (c
+                         P(+|w,
+                              pos ·
+                                  c w)  ) + 1]w log P(  |w, c       )              (
+            ∂ cposthe dot products of the word with the k negative
+                                    pos                       neg i   sampled non-
+ or words.                                  i=1
+            ∂ LCE "                           k
+                                                                      #
+   minimize this loss    function    using
+                     = [s (cneg · w)]w      Xstochastic gradient descent. Fig. 6.14(
+            ∂=cof
+ the intuition negonelog P(+|w,
+                       step       cpos ) +
+                            of learning.        log 1 P(+|w, cnegi )
+                                              i=1       k
+             ∂ LCE "                                    X   #
+                                      k
+                    =
+              aardvark [s (cpos · w) X1]cpos +       [s (cnegi · w)]cnegi                        (
+              ∂ w log s (cpos · w) +
+              =                          log s ( i=1
+                                                  cnegi · w)                            (6.34)
+                                   move apricot and jam closer,
+
+--- end {lec01_dense_vector_representations.pdf} ---
+--- start{lec02_vector_semantics_and_embeddings.pdf} ---
+DSC258: NATURAL LANGUAGE
+PROCESSING
+
+VECTOR SEMANTICS &
+EMBEDDINGS
+RECAP
+
+
+
+  A typical text mining pipeline…
+   Preprocessing
+     • Try to make texts “be5er forma5ed”
+   Representa:on
+     • Make the text data machine-ac:onable
+   Model Training
+     • Speciﬁcally for the end-task
+
+
+
+
+            Preprocessing        Representa.on   Model Training
+OUTLINE
+
+
+
+
+   Word Embedding
+    •     Traditional Distributional Representation
+    •     Dense Vector Representations
+    •     Interesting Properties of Word Vectors
+    •     Applying Word Embeddings
+TRADITIONAL DISTRIBUTIONAL
+     REPRESENTATION
+
+
+
+Vector Semantics
+
+
+
+
+       We wish to preserve the word meaning
+               as much as possible
+TRADITIONAL DISTRIBUTIONAL
+     REPRESENTATION
+
+
+
+What is tezgüino?
+ •   There is some tezgüino.
+ •   A jar of tezgüino is on the table.
+ •   You need a lot of tezgüino to get your land cleared.
+ •   Everybody likes tezgüino.
+ •   I’ll have a drink of tezgüino.
+ •   Tezgüino makes you drunk.
+ •   We make tezgüino out of corn, but we do not distill it.
+
+ From these seven contexts (distribution of neighboring words), one can
+ determine that “tezgüino” is a kind of beer. (Lin, 1998, Nida, 1975)
+   TRADITIONAL DISTRIBUTIONAL
+        REPRESENTATION
+
+
+    Word Embedding Idea
+     Goal: Given a corpus, look for a latent space, which preserves the
+     semantics as much as possible
+
+
+
+
+Kastrati, Zenun, Arianit Kurti, and Ali Shariq Imran. "WET: Word embedding-topic distribution vectors for MOOC video
+lectures dataset." Data in brief 28 (2020): 105090.
+TRADITIONAL DISTRIBUTIONAL
+     REPRESENTATION
+
+
+
+Distributional Hypothesis
+ •   John Firth, 1957: “You shall know a word by the company it keeps”
+
+ •   Words which often have the same context words tend to be similar in
+     semantics
+
+ •    Examples of similar words (not synonym):
+     • “dog” vs. “cat”
+     • “coffee” vs. “tea”
+     • …
+TRADITIONAL DISTRIBUTIONAL
+     REPRESENTATION
+
+
+
+Distributional Similarity
+       TRADITIONAL DISTRIBUTIONAL
+            REPRESENTATION
+
+
+
+       How to define “context”?
+             Op#on 1: Context = Document where the word appears
+
+
+
+Matrix dimension: |V|                                0
+Xd
+  • V approx. 10-50K                                 0   0
+      frequent                                       0   0       0
+  • d could be much                              0           0   0
+      larger                                     0           0   0
+
+
+
+                                    Image Source: https://bit.ly/3DcMFgn/
+   TRADITIONAL DISTRIBUTIONAL
+        REPRESENTATION
+
+
+
+   How to define “context”?
+         Option 1: Context = Document where the word appears
+
+
+Raw count is
+skewed                                          0
+                                                0   0
+towards non-
+                                                0   0       0
+informative                                 0           0   0
+words e.g.,                                 0           0   0
+“the”, “it”
+                                Term-Document Matrix
+                                TF-IDF vectors could be a special case
+                                of this
+TRADITIONAL DISTRIBUTIONAL
+     REPRESENTATION
+
+
+
+How to define context?
+              Op#on 2: Context = nearby/co-occurrence
+
+
+
+
+           This     is       an   example   of   the   sliding   window
+
+           This     is       an   example   of   the   sliding   window
+  TRADITIONAL DISTRIBUTIONAL
+       REPRESENTATION
+
+
+
+   How to define context?
+                  Op#on 2: Context = nearby/co-occurrence
+
+                                   Term-Term Matrix
+                                                 Context Words
+                                                 |V|
+
+ W=
+I1like deep               Target
+                          Words
+learning. I like
+                           |V|
+NLP. I enjoy
+flying.
+ Source:
+ https://bit.ly/3TGTaPH
+  TRADITIONAL DISTRIBUTIONAL
+       REPRESENTATION
+
+
+
+  How to define context?
+                 Option 2: Context = nearby/co-occurrence
+
+                                 Term-Term Matrix
+                                               Context Words
+                                               |V|
+
+Resultant vectors
+                  Target
+tend to be sparse Words
+
+                           |V|
+
+
+
+Source:
+https://bit.ly/3TGTaPH
+ TRADITIONAL DISTRIBUTIONAL
+      REPRESENTATION
+
+
+
+  How to define context?
+                 Option 2: Context = nearby/co-occurrence
+
+                                  Term-Term Matrix
+                                                Context Words
+                                                |V|
+Raw count is
+skewed
+towards non-             Target
+                         Words
+informative
+                          |V|
+words e.g.,
+“the”, “it”
+Source:
+https://bit.ly/3TGTaPH
+TRADITIONAL DISTRIBUTIONAL
+     REPRESENTATION
+
+
+Measure “co-occurrence” strength
+                      Pointwise Mutual Informa#on
+  Co-occurrence frequently                 Too frequent
+TRADITIONAL DISTRIBUTIONAL
+     REPRESENTATION
+
+
+Measure “co-occurrence” strength
+                      Pointwise Mutual Information
+TRADITIONAL DISTRIBUTIONAL
+     REPRESENTATION
+
+
+
+PMI vs. Frequencies
+ “Co-occurrence” is defined by “object of” relations
+
+                                             Frequency    PMI
+                    “drink” vs. “bunch beer”     2       12.34
+                        “drink” vs. “tea”        2       11.75
+                       “drink” vs. “liquid”      2       10.53
+                    “drink” vs. “champagne”      4       11.75
+                     “drink” vs. “anything”      3        5.15
+                         “drink” vs. “it”        3        1.25
+
+                                                                 (Lin, 1998)
+
+--- end {lec02_vector_semantics_and_embeddings.pdf} ---
+--- start{lec03_interesting_properties_applying_word_embeddings.pdf} ---
+DSC258: NATURAL LANGUAGE
+PROCESSING
+
+Interesting Properties/
+Applying Word
+Embeddings
+OUTLINE
+
+
+
+
+   Word Embedding
+    •     Traditional Distributional Representation
+
+    •     Dense Vector Representations
+
+    •     Interesting Properties of Word Vectors
+    •     Applying Word Embeddings
+  INTERESTING PROPERTIES
+
+
+
+        Interesting properties of the word vectors
+         •    Word vectors capture many linguistic regularities
+         •    Famous example
+             • vector('king') - vector('man') + vector('woman') is close
+               to vector('queen’)
+
+
+
+
+https://developers.google.com/machine-learning/crash-course/embeddings/translating-to-a-lower-dimensional-space
+OUTLINE
+
+
+
+
+   Word Embedding
+    •     Traditional Distributional Representation
+
+    •     Dense Vector Representations
+
+    •     Interesting Properties of Word Vectors
+
+    •     Applying Word Embeddings
+APPLYING WORD EMBEDDINGS
+
+
+
+   Popular Pre-trained Word Embedding
+    GoogleNews-vectors-negative300.bin.gz
+     • 300 dimensions
+     • 3 million words and phrases
+     • Trained on news articles (~100 billion words!)
+
+
+    Glove 6B
+     • Many dimension choices (e.g., 100)
+     • 400K vocab (uncased)
+     • Trained on Wikipedia 2014 + Gigaword 5 (6B tokens)
+APPLYING WORD EMBEDDINGS
+
+
+
+
+   Train Your Own Embedding
+    For domain specific applications, embedding trained in the same domain
+    will be very helpful
+
+    Python package
+     • gensim
+     • fasttext
+     • …
+
+    What you need is just a large enough raw corpus
+
+    You can initialize the vectors by some pre-trained ones
+Coding time!
+Let’s try out word embedding together
+CODING TIME !
+CODING TIME !
+CODING TIME !
+CODING TIME !
+OUTLINE
+
+
+
+
+   Word Embedding
+    •     Traditional Distributional Representation
+
+    •     Dense Vector Representations
+
+    •     Interesting Properties of Word Vectors
+
+    •     Applying Word Embeddings
+
+--- end {lec03_interesting_properties_applying_word_embeddings.pdf} ---
+--- start{week3-word2vec.ipynb} ---
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "###  Download a Word2Vec model pre-trained by Google\n",
+    "\n",
+    "- trained on part of Google News dataset (about 100 billion words). \n",
+    "- 300-dimensional vectors for 3 million words and phrases\n",
+    "\n",
+    "- More details can be found here: https://code.google.com/archive/p/word2vec/"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Requirement already satisfied: gensim in /opt/homebrew/Caskroom/miniforge/base/lib/python3.9/site-packages (4.1.2)\r\n",
+      "Requirement already satisfied: smart-open>=1.8.1 in /opt/homebrew/Caskroom/miniforge/base/lib/python3.9/site-packages (from gensim) (5.2.1)\r\n",
+      "Requirement already satisfied: numpy>=1.17.0 in /opt/homebrew/Caskroom/miniforge/base/lib/python3.9/site-packages (from gensim) (1.22.3)\r\n",
+      "Requirement already satisfied: scipy>=0.18.1 in /opt/homebrew/Caskroom/miniforge/base/lib/python3.9/site-packages (from gensim) (1.8.1)\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!pip install gensim"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import gensim.downloader as api\n",
+    "wv = api.load('word2vec-google-news-300') # the download could take you some time"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "300 [ 1.25976562e-01  2.97851562e-02  8.60595703e-03  1.39648438e-01\n",
+      " -2.56347656e-02 -3.61328125e-02  1.11816406e-01 -1.98242188e-01\n",
+      "  5.12695312e-02  3.63281250e-01 -2.42187500e-01 -3.02734375e-01\n",
+      " -1.77734375e-01 -2.49023438e-02 -1.67968750e-01 -1.69921875e-01\n",
+      "  3.46679688e-02  5.21850586e-03  4.63867188e-02  1.28906250e-01\n",
+      "  1.36718750e-01  1.12792969e-01  5.95703125e-02  1.36718750e-01\n",
+      "  1.01074219e-01 -1.76757812e-01 -2.51953125e-01  5.98144531e-02\n",
+      "  3.41796875e-01 -3.11279297e-02  1.04492188e-01  6.17675781e-02\n",
+      "  1.24511719e-01  4.00390625e-01 -3.22265625e-01  8.39843750e-02\n",
+      "  3.90625000e-02  5.85937500e-03  7.03125000e-02  1.72851562e-01\n",
+      "  1.38671875e-01 -2.31445312e-01  2.83203125e-01  1.42578125e-01\n",
+      "  3.41796875e-01 -2.39257812e-02 -1.09863281e-01  3.32031250e-02\n",
+      " -5.46875000e-02  1.53198242e-02 -1.62109375e-01  1.58203125e-01\n",
+      " -2.59765625e-01  2.01416016e-02 -1.63085938e-01  1.35803223e-03\n",
+      " -1.44531250e-01 -5.68847656e-02  4.29687500e-02 -2.46582031e-02\n",
+      "  1.85546875e-01  4.47265625e-01  9.58251953e-03  1.31835938e-01\n",
+      "  9.86328125e-02 -1.85546875e-01 -1.00097656e-01 -1.33789062e-01\n",
+      " -1.25000000e-01  2.83203125e-01  1.23046875e-01  5.32226562e-02\n",
+      " -1.77734375e-01  8.59375000e-02 -2.18505859e-02  2.05078125e-02\n",
+      " -1.39648438e-01  2.51464844e-02  1.38671875e-01 -1.05468750e-01\n",
+      "  1.38671875e-01  8.88671875e-02 -7.51953125e-02 -2.13623047e-02\n",
+      "  1.72851562e-01  4.63867188e-02 -2.65625000e-01  8.91113281e-03\n",
+      "  1.49414062e-01  3.78417969e-02  2.38281250e-01 -1.24511719e-01\n",
+      " -2.17773438e-01 -1.81640625e-01  2.97851562e-02  5.71289062e-02\n",
+      " -2.89306641e-02  1.24511719e-02  9.66796875e-02 -2.31445312e-01\n",
+      "  5.81054688e-02  6.68945312e-02  7.08007812e-02 -3.08593750e-01\n",
+      " -2.14843750e-01  1.45507812e-01 -4.27734375e-01 -9.39941406e-03\n",
+      "  1.54296875e-01 -7.66601562e-02  2.89062500e-01  2.77343750e-01\n",
+      " -4.86373901e-04 -1.36718750e-01  3.24218750e-01 -2.46093750e-01\n",
+      " -3.03649902e-03 -2.11914062e-01  1.25000000e-01  2.69531250e-01\n",
+      "  2.04101562e-01  8.25195312e-02 -2.01171875e-01 -1.60156250e-01\n",
+      " -3.78417969e-02 -1.20117188e-01  1.15234375e-01 -4.10156250e-02\n",
+      " -3.95507812e-02 -8.98437500e-02  6.34765625e-03  2.03125000e-01\n",
+      "  1.86523438e-01  2.73437500e-01  6.29882812e-02  1.41601562e-01\n",
+      " -9.81445312e-02  1.38671875e-01  1.82617188e-01  1.73828125e-01\n",
+      "  1.73828125e-01 -2.37304688e-01  1.78710938e-01  6.34765625e-02\n",
+      "  2.36328125e-01 -2.08984375e-01  8.74023438e-02 -1.66015625e-01\n",
+      " -7.91015625e-02  2.43164062e-01 -8.88671875e-02  1.26953125e-01\n",
+      " -2.16796875e-01 -1.73828125e-01 -3.59375000e-01 -8.25195312e-02\n",
+      " -6.49414062e-02  5.07812500e-02  1.35742188e-01 -7.47070312e-02\n",
+      " -1.64062500e-01  1.15356445e-02  4.45312500e-01 -2.15820312e-01\n",
+      " -1.11328125e-01 -1.92382812e-01  1.70898438e-01 -1.25000000e-01\n",
+      "  2.65502930e-03  1.92382812e-01 -1.74804688e-01  1.39648438e-01\n",
+      "  2.92968750e-01  1.13281250e-01  5.95703125e-02 -6.39648438e-02\n",
+      "  9.96093750e-02 -2.72216797e-02  1.96533203e-02  4.27246094e-02\n",
+      " -2.46093750e-01  6.39648438e-02 -2.25585938e-01 -1.68945312e-01\n",
+      "  2.89916992e-03  8.20312500e-02  3.41796875e-01  4.32128906e-02\n",
+      "  1.32812500e-01  1.42578125e-01  7.61718750e-02  5.98144531e-02\n",
+      " -1.19140625e-01  2.74658203e-03 -6.29882812e-02 -2.72216797e-02\n",
+      " -4.82177734e-03 -8.20312500e-02 -2.49023438e-02 -4.00390625e-01\n",
+      " -1.06933594e-01  4.24804688e-02  7.76367188e-02 -1.16699219e-01\n",
+      "  7.37304688e-02 -9.22851562e-02  1.07910156e-01  1.58203125e-01\n",
+      "  4.24804688e-02  1.26953125e-01  3.61328125e-02  2.67578125e-01\n",
+      " -1.01074219e-01 -3.02734375e-01 -5.76171875e-02  5.05371094e-02\n",
+      "  5.26428223e-04 -2.07031250e-01 -1.38671875e-01 -8.97216797e-03\n",
+      " -2.78320312e-02 -1.41601562e-01  2.07031250e-01 -1.58203125e-01\n",
+      "  1.27929688e-01  1.49414062e-01 -2.24609375e-02 -8.44726562e-02\n",
+      "  1.22558594e-01  2.15820312e-01 -2.13867188e-01 -3.12500000e-01\n",
+      " -3.73046875e-01  4.08935547e-03  1.07421875e-01  1.06933594e-01\n",
+      "  7.32421875e-02  8.97216797e-03 -3.88183594e-02 -1.29882812e-01\n",
+      "  1.49414062e-01 -2.14843750e-01 -1.83868408e-03  9.91210938e-02\n",
+      "  1.57226562e-01 -1.14257812e-01 -2.05078125e-01  9.91210938e-02\n",
+      "  3.69140625e-01 -1.97265625e-01  3.54003906e-02  1.09375000e-01\n",
+      "  1.31835938e-01  1.66992188e-01  2.35351562e-01  1.04980469e-01\n",
+      " -4.96093750e-01 -1.64062500e-01 -1.56250000e-01 -5.22460938e-02\n",
+      "  1.03027344e-01  2.43164062e-01 -1.88476562e-01  5.07812500e-02\n",
+      " -9.37500000e-02 -6.68945312e-02  2.27050781e-02  7.61718750e-02\n",
+      "  2.89062500e-01  3.10546875e-01 -5.37109375e-02  2.28515625e-01\n",
+      "  2.51464844e-02  6.78710938e-02 -1.21093750e-01 -2.15820312e-01\n",
+      " -2.73437500e-01 -3.07617188e-02 -3.37890625e-01  1.53320312e-01\n",
+      "  2.33398438e-01 -2.08007812e-01  3.73046875e-01  8.20312500e-02\n",
+      "  2.51953125e-01 -7.61718750e-02 -4.66308594e-02 -2.23388672e-02\n",
+      "  2.99072266e-02 -5.93261719e-02 -4.66918945e-03 -2.44140625e-01\n",
+      " -2.09960938e-01 -2.87109375e-01 -4.54101562e-02 -1.77734375e-01\n",
+      " -2.79296875e-01 -8.59375000e-02  9.13085938e-02  2.51953125e-01]\n"
+     ]
+    }
+   ],
+   "source": [
+    "vec_king = wv['king']\n",
+    "print(len(vec_king), vec_king)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "<class 'numpy.ndarray'>\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(type(vec_king))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "The word 'cameroon' does not appear in this model\n"
+     ]
+    }
+   ],
+   "source": [
+    "try:\n",
+    "    vec_cameroon = wv['cameroon']\n",
+    "except KeyError:\n",
+    "    print(\"The word 'cameroon' does not appear in this model\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {
+    "collapsed": true
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "array([-0.00350952,  0.01623535, -0.08154297,  0.12792969,  0.11230469,\n",
+       "       -0.00534058,  0.03063965,  0.04931641,  0.22070312,  0.07373047,\n",
+       "       -0.13769531,  0.16210938,  0.02148438, -0.09375   , -0.12792969,\n",
+       "       -0.12402344, -0.11132812,  0.11816406, -0.07861328,  0.25390625,\n",
+       "        0.01794434,  0.14160156,  0.0612793 , -0.08691406,  0.07763672,\n",
+       "        0.05175781, -0.24609375, -0.17578125,  0.14746094,  0.06640625,\n",
+       "       -0.03833008, -0.09033203, -0.07226562,  0.09375   , -0.18847656,\n",
+       "        0.06347656,  0.24121094,  0.00714111, -0.30273438, -0.02478027,\n",
+       "       -0.09619141, -0.30859375, -0.06054688,  0.22167969,  0.07763672,\n",
+       "        0.05834961,  0.15527344, -0.13476562, -0.00341797, -0.13964844,\n",
+       "       -0.02905273,  0.03833008, -0.15332031, -0.20996094,  0.21679688,\n",
+       "        0.01171875, -0.078125  ,  0.00402832, -0.23535156, -0.10400391,\n",
+       "        0.08837891,  0.25976562,  0.02709961,  0.01123047,  0.12988281,\n",
+       "       -0.11914062, -0.07861328, -0.04736328, -0.06591797,  0.07958984,\n",
+       "        0.04321289, -0.14355469,  0.04150391,  0.20410156,  0.05493164,\n",
+       "       -0.06030273,  0.10107422, -0.00439453,  0.32617188, -0.05712891,\n",
+       "       -0.09130859,  0.20019531,  0.02941895, -0.11230469,  0.06054688,\n",
+       "       -0.00982666, -0.30664062, -0.02514648,  0.14355469,  0.07275391,\n",
+       "        0.09716797, -0.09179688, -0.20410156, -0.21875   ,  0.07128906,\n",
+       "        0.16503906, -0.01300049,  0.10888672, -0.09326172, -0.07568359,\n",
+       "       -0.07568359, -0.15136719,  0.0625    , -0.09179688,  0.06176758,\n",
+       "        0.01086426, -0.21484375, -0.12353516,  0.14453125,  0.02001953,\n",
+       "        0.07910156,  0.33398438,  0.06640625, -0.08056641,  0.16699219,\n",
+       "       -0.2421875 ,  0.0090332 , -0.14453125,  0.18066406,  0.21289062,\n",
+       "        0.04077148,  0.171875  , -0.03100586, -0.12597656, -0.0625    ,\n",
+       "       -0.13476562, -0.15820312,  0.11816406, -0.06591797, -0.10058594,\n",
+       "       -0.15234375,  0.14550781, -0.14941406,  0.22070312,  0.04907227,\n",
+       "        0.01281738,  0.00927734,  0.20019531, -0.15429688,  0.16308594,\n",
+       "       -0.04907227, -0.16015625,  0.0177002 , -0.08544922,  0.23828125,\n",
+       "       -0.11572266,  0.08154297, -0.38867188, -0.19433594,  0.33203125,\n",
+       "       -0.12597656,  0.02819824,  0.14550781, -0.14160156,  0.08105469,\n",
+       "        0.09619141, -0.00897217, -0.15332031,  0.15332031, -0.0088501 ,\n",
+       "       -0.10498047,  0.04638672,  0.25195312,  0.09179688, -0.0300293 ,\n",
+       "       -0.14355469, -0.01123047, -0.11865234,  0.12109375,  0.11572266,\n",
+       "       -0.00640869,  0.05419922,  0.06884766, -0.08837891,  0.04589844,\n",
+       "        0.00335693, -0.18164062,  0.02160645, -0.04370117, -0.0559082 ,\n",
+       "       -0.13574219, -0.09375   ,  0.02600098, -0.13964844, -0.06542969,\n",
+       "       -0.04858398,  0.41796875,  0.18554688,  0.18554688,  0.21875   ,\n",
+       "       -0.09277344,  0.23925781,  0.00125885, -0.05102539, -0.20605469,\n",
+       "        0.07128906, -0.04418945, -0.08056641,  0.02978516, -0.08007812,\n",
+       "       -0.04296875, -0.18945312, -0.05810547, -0.0135498 ,  0.09765625,\n",
+       "       -0.10644531, -0.02185059,  0.31445312,  0.04248047,  0.03491211,\n",
+       "       -0.07861328,  0.27148438,  0.07275391, -0.12304688,  0.0291748 ,\n",
+       "       -0.04736328,  0.11279297, -0.16503906,  0.05224609,  0.06933594,\n",
+       "       -0.06542969, -0.02587891,  0.19824219, -0.16601562,  0.13867188,\n",
+       "        0.01422119, -0.10791016,  0.0324707 ,  0.03442383,  0.05981445,\n",
+       "        0.06738281, -0.01940918, -0.10742188, -0.00454712, -0.27539062,\n",
+       "        0.00604248,  0.15917969, -0.06835938,  0.00086975, -0.07177734,\n",
+       "        0.0625    , -0.13671875, -0.06591797, -0.23828125, -0.03466797,\n",
+       "       -0.08105469, -0.05761719,  0.20410156, -0.01226807, -0.14257812,\n",
+       "       -0.16113281,  0.17480469,  0.03662109,  0.12890625,  0.09082031,\n",
+       "        0.0546875 , -0.24511719, -0.00866699, -0.05615234, -0.06933594,\n",
+       "        0.01916504,  0.11865234, -0.06005859, -0.0859375 ,  0.01940918,\n",
+       "       -0.02270508, -0.0612793 ,  0.06982422,  0.17285156,  0.17773438,\n",
+       "        0.04370117,  0.05615234,  0.02734375,  0.2578125 ,  0.19433594,\n",
+       "       -0.04003906, -0.12158203, -0.10839844, -0.17773438,  0.05249023,\n",
+       "       -0.11376953, -0.11230469,  0.27148438, -0.00061417,  0.0168457 ,\n",
+       "       -0.11816406, -0.03833008, -0.04223633, -0.12109375, -0.12695312,\n",
+       "        0.00222778, -0.20019531, -0.1328125 ,  0.09960938, -0.2734375 ,\n",
+       "       -0.328125  , -0.22460938, -0.14746094, -0.02368164,  0.24902344],\n",
+       "      dtype=float32)"
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wv['King'] # has the upper words in the vocab"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "'car'\t'minivan'\t0.69\n",
+      "'car'\t'bicycle'\t0.54\n",
+      "'car'\t'airplane'\t0.42\n",
+      "'car'\t'cereal'\t0.14\n",
+      "'car'\t'communism'\t0.06\n"
+     ]
+    }
+   ],
+   "source": [
+    "pairs = [\n",
+    "    ('car', 'minivan'),   # a minivan is a kind of car\n",
+    "    ('car', 'bicycle'),   # still a wheeled vehicle\n",
+    "    ('car', 'airplane'),  # ok, no wheels, but still a vehicle\n",
+    "    ('car', 'cereal'),    # ... and so on\n",
+    "    ('car', 'communism'),\n",
+    "]\n",
+    "for w1, w2 in pairs:\n",
+    "    sim = wv.similarity(w1, w2)\n",
+    "    print('%r\\t%r\\t%.2f' % (w1, w2, sim))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "'king'\t'King'\t0.52\n",
+      "'car'\t'truck'\t0.67\n",
+      "'king'\t'queen'\t0.65\n",
+      "'UCSD'\t'Rady'\t0.35\n",
+      "'UCSD'\t'Scripps'\t0.39\n",
+      "'UCSD'\t'UCLA'\t0.62\n",
+      "'Scripps'\t'Rady'\t0.23\n",
+      "'sports'\t'football'\t0.59\n",
+      "'basketball'\t'football'\t0.67\n",
+      "'good'\t'bad'\t0.72\n"
+     ]
+    }
+   ],
+   "source": [
+    "pairs = [\n",
+    "    ('king', 'King'),\n",
+    "    ('car', 'truck'),\n",
+    "    ('king', 'queen'),\n",
+    "    ('UCSD', 'Rady'),\n",
+    "    ('UCSD', 'Scripps'),\n",
+    "    ('UCSD', 'UCLA'),\n",
+    "    ('Scripps', 'Rady'),\n",
+    "    ('sports', 'football'),\n",
+    "    ('basketball', 'football'),\n",
+    "    ('good', 'bad'),\n",
+    "]\n",
+    "for w1, w2 in pairs:\n",
+    "    sim = wv.similarity(w1, w2)\n",
+    "    print('%r\\t%r\\t%.2f' % (w1, w2, sim))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.69070363\n"
+     ]
+    }
+   ],
+   "source": [
+    "from numpy import dot\n",
+    "from numpy.linalg import norm\n",
+    "\n",
+    "def cosine_similarity(word_a, word_b, wv):\n",
+    "    try:\n",
+    "        a = wv[word_a]\n",
+    "        b = wv[word_b]\n",
+    "        cos_sim = dot(a, b)/(norm(a)*norm(b))\n",
+    "        return cos_sim\n",
+    "    except KeyError:\n",
+    "        return -1\n",
+    "\n",
+    "print(cosine_similarity('car', 'minivan', wv))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.4493644\n",
+      "-0.06825185\n"
+     ]
+    }
+   ],
+   "source": [
+    "diff1 = wv['queen'] - wv['king']\n",
+    "diff2 = wv['woman'] - wv['man']\n",
+    "diff3 = wv['moon'] - wv['sun']\n",
+    "print( dot(diff1, diff2)/(norm(diff1)*norm(diff2)) )\n",
+    "print( dot(diff1, diff3)/(norm(diff1)*norm(diff3)) )"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.7186802\n"
+     ]
+    }
+   ],
+   "source": [
+    "woman = wv['queen'] - wv['king'] + wv['man']\n",
+    "real_woman = wv['woman']\n",
+    "print( dot(woman, real_woman)/(norm(woman)*norm(real_woman)) )"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Nearest Neighbor Search\n",
+    "\n",
+    "- Most similar words based on word embedding vectors"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "[('vehicle', 0.7821096181869507), ('cars', 0.7423831224441528), ('SUV', 0.7160962224006653), ('minivan', 0.6907037496566772), ('truck', 0.6735789775848389), ('Car', 0.6677608489990234), ('Ford_Focus', 0.667320191860199), ('Honda_Civic', 0.662684977054596), ('Jeep', 0.6511331796646118), ('pickup_truck', 0.6441438794136047), ('Toyota_Camry', 0.6395173668861389), ('scooter', 0.638153076171875), ('Honda_Accord', 0.6343971490859985), ('sedan', 0.6336700916290283), ('Toyota_Corolla', 0.6304991245269775), ('motorcycle', 0.6256055235862732), ('Nissan_Altima', 0.625311017036438), ('Ford_Explorer', 0.6211567521095276), ('Ford_Escort', 0.6211459040641785), ('Ford_Mustang', 0.6198909878730774)]\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(wv.most_similar(positive=['car'], topn=20))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Find the outlier in a list of words"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "car\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(wv.doesnt_match(['fire', 'water', 'land', 'sea', 'air', 'car']))"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Average word embedding for a doc"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "metadata": {
+    "scrolled": true
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "0.93147177\n",
+      "0.8114622\n",
+      "0.9014764\n"
+     ]
+    }
+   ],
+   "source": [
+    "def cos_sim(a, b):\n",
+    "    return dot(a, b)/(norm(a)*norm(b))\n",
+    "\n",
+    "\n",
+    "import numpy as np\n",
+    "\n",
+    "def doc2vec(doc, wv):\n",
+    "    vecs = []\n",
+    "    for token in doc.split():\n",
+    "        try:\n",
+    "            vecs.append(wv[token])\n",
+    "        except KeyError:\n",
+    "            pass\n",
+    "    return np.mean(vecs, axis=0)\n",
+    "\n",
+    "doc1 = 'I like this course so much'\n",
+    "doc2 = 'I do not like this course'\n",
+    "doc3 = 'I like this movie'\n",
+    "doc4 = 'I hate this movie'\n",
+    "\n",
+    "v1 = doc2vec(doc1, wv)\n",
+    "v2 = doc2vec(doc2, wv)\n",
+    "v3 = doc2vec(doc3, wv)\n",
+    "v4 = doc2vec(doc4, wv)\n",
+    "\n",
+    "print(cos_sim(v1, v2))\n",
+    "print(cos_sim(v1, v3))\n",
+    "print(cos_sim(v3, v4))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.7190051"
+      ]
+     },
+     "execution_count": 15,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wv.similarity('good', 'bad')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.38815606"
+      ]
+     },
+     "execution_count": 16,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wv.similarity('hate', 'like')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.57684326"
+      ]
+     },
+     "execution_count": 17,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wv.similarity('long', 'short')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.8825921"
+      ]
+     },
+     "execution_count": 18,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wv.similarity('bullish', 'bearish')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.46214014"
+      ]
+     },
+     "execution_count": 19,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wv.similarity('California', 'Texas')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.726668"
+      ]
+     },
+     "execution_count": 20,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "wv.similarity('San_Diego', 'San_Francisco')"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Download the glove.6B.zip from https://nlp.stanford.edu/projects/glove/"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "<ipython-input-21-9671dd1b7903>:8: DeprecationWarning: Call to deprecated `glove2word2vec` (KeyedVectors.load_word2vec_format(.., binary=False, no_header=True) loads GLoVE text vectors.).\n",
+      "  _ = glove2word2vec(glove_file, tmp_file)\n"
+     ]
+    }
+   ],
+   "source": [
+    "from gensim.test.utils import datapath, get_tmpfile\n",
+    "from gensim.models import KeyedVectors\n",
+    "from gensim.scripts.glove2word2vec import glove2word2vec\n",
+    "\n",
+    "glove_file = './glove.6B/glove.6B.100d.txt'\n",
+    "tmp_file = get_tmpfile(\"test_word2vec.txt\")\n",
+    "\n",
+    "_ = glove2word2vec(glove_file, tmp_file)\n",
+    "\n",
+    "model = KeyedVectors.load_word2vec_format(tmp_file)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "'car'\t'minivan'\t0.67\t0.69\n",
+      "'car'\t'bicycle'\t0.69\t0.54\n",
+      "'car'\t'airplane'\t0.65\t0.42\n",
+      "'car'\t'cereal'\t0.12\t0.14\n",
+      "'car'\t'communism'\t0.04\t0.06\n"
+     ]
+    }
+   ],
+   "source": [
+    "pairs = [\n",
+    "    ('car', 'minivan'),   # a minivan is a kind of car\n",
+    "    ('car', 'bicycle'),   # still a wheeled vehicle\n",
+    "    ('car', 'airplane'),  # ok, no wheels, but still a vehicle\n",
+    "    ('car', 'cereal'),    # ... and so on\n",
+    "    ('car', 'communism'),\n",
+    "]\n",
+    "for w1, w2 in pairs:\n",
+    "    sim_glove = model.similarity(w1, w2)\n",
+    "    sim_word2vec = wv.similarity(w1, w2)\n",
+    "    print('%r\\t%r\\t%.2f\\t%.2f' % (w1, w2, sim_glove, sim_word2vec))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.71766543"
+      ]
+     },
+     "execution_count": 23,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model.similarity('better', 'worse')"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "0.7702799"
+      ]
+     },
+     "execution_count": 24,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model.similarity('good', 'bad')"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.2"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
+
+--- end {week3-word2vec.ipynb} ---

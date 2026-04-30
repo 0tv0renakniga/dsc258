@@ -1,0 +1,406 @@
+--- start{lec01_bag_of_words_classifier.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+BAG OF WORDS CLASSIFIER
+A TYPICAL TEXT MINING PIPELINE
+            (Recap)
+
+
+
+
+                     Preprocessing      Representation       Model Training
+
+
+
+
+                Try to make texts    Make the text data   Specifically for the
+                “better formatted”   machine-actionable   end-task
+Bag-of-words Text Classifier
+
+● What’s text classification? How to evaluate a classifier?
+● Bag-of-words Representations
+● Building a linear classifier upon bag-of-words
+Bag-of-words Text Classifier
+
+● What’s text classification? How to evaluate a classifier?
+● Bag-of-words Representations
+● Building a linear classifier upon bag-of-words
+SENTIMENT ANALYSIS AS AN EXAMPLE
+
+
+
+
+ Given a review document, can we estimate its sentiment from its content?
+SENTIMENT ANALYSIS AS AN EXAMPLE
+K-fold Cross Validation
+Train/Dev/Test
+Evaluation Metrics
+
+
+
+
+                     ● TP: True Positive
+                        ○ Predicted as Positive & True Label Positive
+                     ● TN: True Negative
+                        ○ Predicted as Negative & True Label Negative
+
+                     ● Similarly, we have …
+
+                     ● FP: False Positive
+                     ● FN: False Negative
+Evaluation Metrics: Accuracy,
+  Precision, Recall, and F1
+
+
+
+
+                                ● Accuracy
+                                  ○ (TP + TN) / (TP + FP + FN + TN)
+                                ● Precision
+                                  ○ TP / (TP + FP)
+                                ● Recall
+                                  ○ TP / (TP + FN)
+
+                                ● F1
+                                   ○ Harmonic Mean between Prec and Rec
+                                   ○ 2 * Prec * Rec / (Prec + Rec)
+
+--- end {lec01_bag_of_words_classifier.pdf} ---
+--- start{lec02_bag_of_words_representations.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+BAG OF WORDS
+REPRESENTATIONS
+Bag-of-words Text Classifier
+
+● What’s text classification? How to evaluate a classifier?
+● Bag-of-words Representations
+● Building a linear classifier upon bag-of-words
+Bag-of-words Assumption
+Pre-processing Example
+Pre-processing Example
+Pre-processing Example
+How to define weights?
+
+
+
+   ● Weights should reflect the importance
+
+   ● Choices
+     ○ Binary
+     ○ Term Frequency (TF)
+     ○ TF + Inverse Document Frequency (TF-IDF)
+Binary Bag-of-words Vectors
+
+
+
+     ● This is a flexible framework
+       ○ How to define term?              à    all words in the vocabulary
+       ○ How to assign weights?           à    binary: present or not
+
+     ● Vocabulary 𝑉 = {𝑣!, 𝑣", … , 𝑣# }
+
+     ● Given a document 𝑑 = (𝑤!, 𝑤", … , 𝑤$ )                 ß these words are
+       ordered
+
+                                        1 ∃𝑗, 𝑠. 𝑡. 𝑣' = 𝑤(
+                               𝒙%,' = -
+                                        0 𝑜𝑡ℎ𝑒𝑟𝑤𝑖𝑠𝑒
+  Example
+
+
+
+● V = {news, about, presidential, campaign, food, …}
+● D1: … news about presidential campaign …
+● D2: … news about organic food campaign …
+● D3: … news of presidential campaign …
+● D4: … campaign … campaign … campaign … campaign … campaign …
+
+● 𝒙)! = (1, 1, 1, 1, 0, … )
+● 𝒙)" = (1, 1, 0, 1, 1, … )
+● 𝒙)* = (1, 0, 1, 1, 0, … )
+● 𝒙)+ = (0, 0, 0, 1, 0, … )
+ From Binary to TF
+
+
+
+● This is a flexible framework
+  ○ How to define term?              à    all words in the vocabulary
+  ○ How to assign weights?           à    frequency: how many times it appears
+
+● Vocabulary 𝑉 = {𝑣!, 𝑣", … , 𝑣# }
+
+● Given a document 𝑑 = (𝑤!, 𝑤", … , 𝑤$ )              ß these words are
+  ordered
+
+                                 𝒙%,' = :𝑗 𝑤( = 𝑣'
+  Example
+
+
+
+● V = {news, about, presidential, campaign, food, …}
+● D1: … news about presidential campaign …
+● D2: … news about organic food campaign …
+● D3: … news of presidential campaign …
+● D4: … campaign … campaign … campaign … campaign … campaign …
+
+● 𝒙)! = (1, 1, 1, 1, 0, … )
+● 𝒙)" = (1, 1, 0, 1, 1, … )
+● 𝒙)* = (1, 0, 1, 1, 0, … )
+● 𝒙)+ = (0, 0, 0, 5, 0, … )
+ More TF Variants
+
+
+
+● Idea: A term is more important if it occurs more frequently in a document
+
+● 𝑓(𝑡, 𝑑) is the raw frequency of the term 𝑡 in the document 𝑑
+
+● Popular Variants of TF
+  ○ Raw TF: TF(𝑡, 𝑑) = 𝑓(𝑡, 𝑑)
+  ○ Log TF: TF(𝑡, 𝑑) = log(𝑓 𝑡, 𝑑 + 1)
+  ○ Maximum Frequency Normalization: TF(𝑡, 𝑑) = 0.5 + 0.5×
+    𝑓 𝑡, 𝑑 /MaxFreq(d)
+                                                                 ,-! ×/ 0,%
+  ○ BM25 TF (normalized by document length): TF(𝑡, 𝑑) =                       !
+                                                            / 0,% -1(! 34-4 ×" ! )
+Normalization is important!
+
+
+
+  ● “Repeated occurrences” are less informative than the “first occurrence”
+
+
+  ● Generally penalize long document, but avoid over-penalizing (pivoted
+    normalization)
+
+  ● Two possible reasons of a long document:
+    ○ A doc is long because it uses more words
+    ○ A doc is long because it has more contents
+Inverse Document Frequency
+
+
+
+   ● Idea: A term is more discriminative/important if it occurs only in fewer
+     documents
+
+
+   ● 𝑑𝑓) (𝑡) is the number of documents that contains term 𝑡 in the corpus 𝐷
+     ○ This 𝐷 is expected to be a huge collection of documents
+     ○ This 𝐷 could be some other corpus
+
+   ● Variants of IDF
+                                   )
+     ○ Log IDF: IDF(𝑡) = 1 + log %/ 0
+                                      #
+                                          ) -!
+       ○ Smoothed IDF: IDF(𝑡) = log
+                                       %/# 0 -6.8
+Pre-compute IDF
+TF-IDF Vectorizer
+ TF-IDF Weighting
+
+
+
+● Weight(𝑡, 𝑑) = TF(𝑡, 𝑑) * IDF(𝑡)
+  ○ Common in doc à high TF à high weight
+  ○ Rare in collection à high IDF à high weight
+
+● So, what kind of terms would have high weights in a document?
+ZIPF’S LAW
+  (Revisit)
+
+
+
+
+                         Word                  Most useful
+                         Freq.                  words
+
+                    Biggest                             Is “too rare” a problem?
+                      data
+                   structure
+                 (stop words)
+
+                                        Word Rank (by
+                                           Freq)
+              Generalized Zipf’s law:            Applicable in many domains
+Bag-of-words Summary
+
+
+
+● Pros
+  ○ Empirically effective
+  ○ Intuitive
+  ○ Easy to implement
+● Cons
+  ○ Too many variants of TF-IDF
+  ○ Ad-hoc parameter tuning
+  ○ Assume term independence
+
+● Tips
+  ○ Sparse Vector/Matrix is your best friend in vector space modeling
+
+--- end {lec02_bag_of_words_representations.pdf} ---
+--- start{lec03_building_linear_classifiers.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+BUILDING LINEAR
+CLASSIFIERS
+Bag-of-words Text Classifier
+
+● What’s text classification? How to evaluate a classifier?
+● Bag-of-words Representations
+● Building a linear classifier upon bag-of-words
+Ordinary Least Square Regression
+
+
+
+    ● Let’s start with Ordinary Least Square (OLS) Regression
+         OLS: Example
+
+
+
+   ● The following data set gives average heights and weights for American
+     women aged 30–39 (source: The World Almanac and Book of Facts, 1975).
+
+Height (m)   1.47       1.50   1.52   1.55   1.57   1.60   1.63   1.65   1.68   1.70   1.73   1.75   1.78   1.80   1.83
+Weight
+             52.21 53.12 54.48 55.84 57.20 58.57 59.93 61.29 63.11 64.47 66.28 68.10 69.92 72.19 74.46
+(kg)
+
+
+
+   ● Build a relation between Weight and Height
+     ○ Weight = f (Height)
+OLS: Linear Prediction
+
+
+
+● Linear Prediction for the i-th instance
+                                   &
+                             !𝒊 = ( 𝒙",# 𝒘# + 𝑏
+                             𝒚
+                                  #$%
+
+  !𝒊 is the prediction
+● 𝒚
+● 𝒙" is the feature vector of the i-th instance
+● 𝑑 is the number of dimensions of the feature vector
+
+● 𝒘 and 𝑏 are parameters to learn
+OLS: Square Loss Function
+
+
+
+  ● Square Loss for the i-th instance
+
+
+                                                   !" (
+                                        ! " = 𝒚" − 𝒚
+                                 𝑙 𝒚" , 𝒚
+
+  ● Square loss for all n instances
+
+                                )              )
+                                                      !" (
+                                         ! " = ( 𝒚" − 𝒚
+                            𝐿 = ( 𝑙 𝒚" , 𝒚
+                                "$%            "$%
+ OLS via sklearn
+
+
+
+
+● The model minimize the square loss without any regularization
+● n_jobs à # of workers, mainly to speed up the training process
+From OLS to Logistic Regression
+
+
+
+     ● Logistic Prediction for the i-th instance
+                                          &
+                                  !𝒊 = 𝜎 ( 𝒙",# 𝒘# + 𝑏
+                                  𝒚
+                                         #$%
+
+
+       !𝒊 is the prediction
+     ● 𝒚
+     ● 𝒙" is the feature vector of the i-th instance
+     ● 𝑑 is the number of dimensions of the feature vector
+     ● 𝜎 is the sigmoid function
+
+     ● 𝒘 and 𝑏 are parameters to learn
+Sigmoid Function
+
+
+
+
+       𝑒*     1
+𝜎 𝑥 = *   =
+     𝑒 + 1 1 + 𝑒 +*
+Logistic Loss Function
+
+
+
+● Some facts
+  ○ 𝒚" ∈ 0, 1
+    !" ∈ [0, 1]
+  ○ 𝒚
+
+
+● Logistic Loss for the i-th instance
+
+
+                                !" = − 𝑦" log 𝑦:" + 1 − 𝑦" log 1 − 𝑦:"
+                         𝑙 𝒚" , 𝒚
+Using logistic regression for
+        regression
+
+
+
+   ● Apply min-max normalization for the target variable
+         * +,")
+     ○ -./ + ,") à [0, 1]
+     ○ Could be other variants
+
+
+   ● And then, revert it back for predictions/evaluations
+
+   ● It works for bounded regression!
+Logistic regression via sklearn
+Logistic regression for sentiment
+             analysis
+
+
+
+     ● We first split the entire X, y dataset into train and test
+Logistic regression for sentiment
+             analysis
+
+
+
+     ● We first split the entire X, y dataset into train and test
+
+
+
+
+     ● Build a model on (a subset of) training set, and then evaluate on the test set
+
+
+
+
+     ● Sparse matrix needed to build models on the entire training set
+Summary
+ SUMMARY
+
+
+
+
+ ● What’s text classification? How to evaluate a classifier?
+ ● Bag-of-words Representations
+ ● Building a linear classifier upon bag-of-words
+
+ Feel free to ask questions in Office Hours / Piazza
+
+--- end {lec03_building_linear_classifiers.pdf} ---
