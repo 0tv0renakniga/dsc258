@@ -1,0 +1,413 @@
+--- start{lec01_part_of_speech_tags.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+PART OF SPEECH TAGS
+OUTLINE
+
+
+
+
+    • Part-of-Speech Tags
+    • POS Tagging using spaCy
+    • Classic POS Tagger using HMM
+    • More POS Tagging Ideas & Summary
+WHAT ARE PART OF SPEECH TAGS?
+
+
+
+
+  Parts-of-speech are syntactic classes of words
+   • Not semantic
+
+  Examples:
+   • Coarse-grain: Noun, Verb, …
+   • Fine-grain: Proper Noun, Pronoun, …
+
+  The tags vary across languages
+   • Think about those language-specific phenomena
+POS TAGS FOR ENGLISH
+
+
+
+             Open class (lexical) words
+             Nouns                        Verbs         Adjectives   yellow
+
+              Proper       Common          Main         Adverbs      slowly
+               IBM          cat / cats     see
+               Italy        snow           registered   Numbers       … more
+                                                        122,312
+                                                        one
+             Closed class (functional)
+                                           Auxiliary
+              Determiners the some         can          Prepositions to with
+                                           had
+              Conjunctions and or                       Particles     off up
+
+              Pronouns       he its                                   … more
+
+
+
+                                                                               4
+POS TAGS FOR ENGLISH
+ POS Tags for English
+        CC
+        CD
+                         conjunction, coordinating
+                             numeral, cardinal
+                                                                          and both but either or
+                                                                       mid-1890 nine-thirty 0.5 one
+        DT                      determiner                              a all an every no that the
+        EX                    existential there                                    there
+        FW                     foreign word                            gemeinschaft hund ich jeux
+         IN      preposition or conjunction, subordinating             among whether out on by if
+         JJ            adjective or numeral, ordinal                  third ill-mannered regrettable
+        JJR               adjective, comparative                           braver cheaper taller
+        JJS                adjective, superlative                        bravest cheapest tallest
+        MD                    modal auxiliary                           can may might will would
+         NN          noun, common, singular or mass            cabbage thermostat investment subhumanity
+        NNP               noun, proper, singular                    Motown Cougar Yvette Liverpool
+        NNPS               noun, proper, plural                       Americans Materials States
+        NNS                noun, common, plural                   undergraduates bric-a-brac averages
+        POS                  genitive marker                                      ' 's
+        PRP                 pronoun, personal                            hers himself it we them
+        PRP$               pronoun, possessive                   her his mine my our ours their thy your
+        RB                        adverb                         occasionally maddeningly adventurously
+        RBR                 adverb, comparative                   further gloomier heavier less-perfectly
+        RBS                 adverb, superlative                        best biggest nearest worst
+        RP                       particle                         aboard away back by on open through
+        TO         "to" as preposition or infinitive marker                      to
+        UH                      interjection                      huh howdy uh whammo shucks heck
+         VB                   verb, base form                              ask bring fire see take
+        VBD                   verb, past tense                        pleaded swiped registered saw
+        VBG          verb, present participle or gerund           stirring focusing approaching erasing
+        VBN                 verb, past participle                 dilapidated imitated reunifed unsettled
+        VBP     verb, present tense, not 3rd person singular      twist appear comprise mold postpone
+        VBZ       verb, present tense, 3rd person singular            bases reconstructs marks uses
+        WDT                    WH-determiner                       that what whatever which whichever
+        WP                    WH-pronoun                          that what whatever which who whom
+        WP$              WH-pronoun, possessive                                 whose
+                                                                                                            5
+        WRB                   Wh-adverb                              however whenever where why
+ AMBIGUITY OF POS TAGS
+
+
+
+The same word can have multiple POS tags
+ • It depends on contexts
+                                           VBD          VB
+                                           VBN   VBZ    VBP   VBZ
+                                           NNP   NNS    NN    NNS    CD   NN
+                                           Fed raises interest rates 0.5 percent
+
+Which combination makes the most sense? We have to consider …
+ • Grammar
+ • Suffixes
+ • Capitalization
+ • Gazetteers (name databases)                                                     6
+
+ • …
+  WHY POS TAGGING?
+
+
+
+
+Useful in many applications
+ • Text-to-speech
+ • Lemmatization (we learned this in pre-processing)
+ • Noun-Phrase Chunking
+ • Regex like: {JJ | NN}* {NN | NNS}
+
+Useful as a pre-processing step for parsing
+                                                       7
+
+--- end {lec01_part_of_speech_tags.pdf} ---
+--- start{lec02_tags_using_spacy.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+POS TAGGING
+USING SPACY
+OUTLINE
+
+
+
+
+    • Part-of-Speech Tags
+
+    • POS Tagging using spaCy
+    • Classic POS Tagger using HMM
+    • More POS Tagging Ideas & Summary
+POS TAGGING USING SPACY
+POS TAGGING USING SPACY
+NOUN PHRASE CHUNKING USING SPACY
+
+--- end {lec02_tags_using_spacy.pdf} ---
+--- start{lec03_tags_using_hidden_markov.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+POS TAGGING WITH
+HIDDEN MARKOV MODELS
+OUTLINE
+
+
+
+
+    • Part-of-Speech Tags
+    • POS Tagging using spaCy
+
+    • Classic POS Tagger using HMM
+    • More POS Tagging Ideas & Summary
+CLASSIC SOLUTION: HIDDEN MARKOV MODELS
+
+
+
+
+   We want a model that captures:
+    •   The (hidden) POS tag sequence s
+    •   The (observed) word sequence w
+    •   The dependency between adjacent words/tags (i.e., context)
+                             s0      s1   s2      sn
+
+
+                                    w1    w2     wn
+ASSUMPTIONS IN HMMs FOR POS TAGGING
+
+
+
+
+      s0      s1      s2              sn
+
+
+              w1      w2              wn
+
+
+ • POS tag sequence is generated by a Markov model
+ • (Hidden) States are POS tag n-grams
+ • Words are chosen independently, conditioned only on the tags/states
+   STATES
+
+
+
+States encode what is relevant about the past
+
+Transitions P(s | s’) encode well-formed tag sequences
+ • In a bigram tagger, states = tags               1st order
+ • In a trigram tagger, states = tag pairs         2nd order
+ • …                                               …
+
+                       s0    s1     s2           sn
+
+
+                             w1     w2           wn
+ESTIMATING TRANSITIONS (SUPERVISED)
+
+
+
+
+         s0         s1         s2                   sn
+
+
+                   w1          w2                  wn
+
+When we know tag sequences, we can do counting to estimate the transition
+probabilities
+
+What will happen for rare/unseen cases?
+ • E.g., in trigram tagger, some combinations of tag triples can be
+    rare/unseen
+ • Smoothing        P(ti | ti -1, ti -2 ) = l2 Pˆ (ti | ti -1, ti -2 ) + l1Pˆ (ti | ti -1 ) + (1 - l1 - l2 ) Pˆ (ti )
+ESTIMATING TRANSITIONS (SUPERVISED)
+
+
+
+
+         s0         s1         s2                   sn
+
+
+                   w1          w2                  wn
+
+When we know tag sequences, we can do counting to estimate the transition
+probabilities
+
+What will happen for rare/unseen cases?
+ • E.g., in trigram tagger, some combinations of tag triples can be
+    rare/unseen
+ • Smoothing        P(ti | ti -1, ti -2 ) = l2 Pˆ (ti | ti -1, ti -2 ) + l1Pˆ (ti | ti -1 ) + (1 - l1 - l2 ) Pˆ (ti )
+ESTIMATING EMISSIONS (SUPERVISED)
+
+
+
+
+      s0      s1       s2           sn
+
+
+              w1      w2            wn
+
+
+Tags are closed-world but words are open-world
+ • How to handle new words and new word-tag pairs?
+
+Solutions
+ • <unk> word replacement
+ • Unknown word classes (e.g., affixes or word shapes)
+ • …
+                                                         8
+THE STATE LATTICE (COARSE POS TAGS ONLY)
+
+
+
+   Special state         ^         ^         ^         ^        ^      ^
+   designed for
+   START
+                         N         N        N         N         N      N
+
+
+                         V         V        V         V         V      V
+
+                                                                             Special state
+                          J        J         J         J        J       J    designed for
+                                                                             END
+                         D         D        D         D         D      D
+                                                                             Special word
+                                                                             added as the last
+   Special word          $         $         $         $        $      $
+                                                                             token in every
+   added as the
+                                                                             sentence
+   first token in
+   every sentence       START    Fed       raises   interest   rates   END
+DECODING A POS TAG SEQUENCE AS A PATH IN
+           THE STATE LATTICE
+
+
+                         ^         ^         ^         ^        ^      ^
+
+
+                         N         N        N         N         N      N
+
+
+                         V         V        V         V         V      V
+
+
+                         J         J         J         J        J       J
+
+
+                         D         D        D         D         D      D
+
+                         $         $         $         $        $      $
+
+
+                        START    Fed       raises   interest   rates   END
+BENCHMARK DATASET FOR POS TAGGING
+
+
+
+Benchmark dataset: Human annotated sentences from WSJ articles
+ • Every token is annotated for its POS tag
+ • The human annotations may have errors (~2% on this dataset)
+                      DT NN IN NN               VBD NNS         VBD
+                      The average of interbank offered rates plummeted …
+
+  •   Sometimes it’s hard to annotate
+                                     JJ     JJ     NN
+                                    chief executive officer
+                                     NN     JJ      NN
+                                    chief executive officer
+                                     JJ     NN      NN
+                                    chief executive officer
+                                                                           11
+                                     NN     NN        NN
+                                    chief executive officer
+POS TAGGING PERFORMANCE USING HMMs
+
+
+
+
+ Choose the most common tag for every word
+  • With a bad unknown word model à 90.3%
+  • With a carefully designed unknown word model à 93.7%
+
+ TnT (Brants, 2000)
+  • A carefully smoothed trigram tagger à 96.7%
+
+ State-of-the-art (SOTA) is 97+%
+  • Already very close to perfect
+  • Remember that this WSJ dataset has ~2% errors
+
+--- end {lec03_tags_using_hidden_markov.pdf} ---
+--- start{lec04_more_pos_tag_ideas.pdf} ---
+DSC258: NATURAL LANGUAGE PROCESSING
+
+MORE POS TAGGING IDEAS
+OUTLINE
+
+
+
+
+    • Part-of-Speech Tags
+    • POS Tagging using spaCy
+    • Classic POS Tagger using HMM
+
+    • More POS Tagging Ideas & Summary
+INTRODUCING CONTEXT-FREE FEATURES
+
+
+
+  Example features
+   • Word
+   • Lowercased word
+   • Prefixes
+   • Suffixes
+   • Capitalization
+   • Word shapes
+
+  Build a classifier to estimate P(tag | word)
+   • à can lead to 93.7% accuracy without context
+MAKING IT CONTEXT-AWARE
+
+
+
+
+  Conditional Random Field (CRF)
+
+  High-level explanations
+   • Extends the hidden states from discrete tags to continuous vector
+       representations
+   • Builds a classifier to predict the tag based on the vector representation
+   • Decodes the tag sequence by considering the joint transition-emission
+       probability distribution
+UNSUPERVISED POS TAGGING
+
+
+
+ Expectation-Maximization (EM)
+  • Start with a uniform HMM
+  • Run EM
+  • Inspect results
+
+ Clustering based on contexts
+  • Distributional representation
+  • Contextualized representations from neural language models
+
+ • …
+DOMAIN EFFECTS IN POS TAGGERS
+
+
+
+   Accuracies degrade outside of domain
+    • E.g., applies a tagger trained on news to tweets
+    • Up to 3x error rate
+    • Usually make the most errors on the things you care about in the
+       domain (e.g., protein names)
+
+      • This requires users to train their own domain-specific taggers
+OUTLINE
+
+
+
+
+    • Part-of-Speech Tags
+    • POS Tagging using spaCy
+    • Classic POS Tagger using HMM
+    • More POS Tagging Ideas & Summary
+
+--- end {lec04_more_pos_tag_ideas.pdf} ---
